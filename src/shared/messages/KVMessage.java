@@ -1,37 +1,74 @@
 package shared.messages;
 
-public interface KVMessage {
-	
-	public enum StatusType {
-		GET, 			/* Get - request */
-		GET_ERROR, 		/* requested tuple (i.e. value) not found */
-		GET_SUCCESS, 	/* requested tuple (i.e. value) found */
-		PUT, 			/* Put - request */
-		PUT_SUCCESS, 	/* Put - request successful, tuple inserted */
-		PUT_UPDATE, 	/* Put - request successful, i.e. value updated */
-		PUT_ERROR, 		/* Put - request not successful */
-		DELETE_SUCCESS, /* Delete - request successful */
-		DELETE_ERROR 	/* Delete - request successful */
-	}
+import java.nio.charset.StandardCharsets;
 
-	/**
-	 * @return the key that is associated with this message, 
-	 * 		null if not key is associated.
-	 */
-	public String getKey();
+import shared.messages.IKVMessage;
+import shared.messages.KVMessageTool;
+
+public class KVMessage implements IKVMessage {
+
+    StatusType stsType;
+    String strType;
+    String key;
+    String value;
+    String message;
+
+    public KVMessage(StatusType type, String msg){
+        this.strType = KVMessageTool.parseStatusType(type);
+        this.stsType = type;
+        this.key = msg;
+        this.value = null;
+        this.message = this.strType + " " + msg + "\r\n";
+    }
+
+    public KVMessage(StatusType type, String key, String val){
+        this.strType = KVMessageTool.parseStatusType(type);
+        this.stsType = type;
+        this.key = key;
+        this.value = val;
+        this.message = this.strType + " " + key + " " + val + "\r\n";
+    }
+
+    public KVMessage(String type, String msg){
+        this.strType = type;
+        this.stsType = KVMessageTool.parseStringType(type);
+        this.key = msg;
+        this.value = null;
+        this.message = type + " " + msg + "\r\n";
+    }
+    
+    public KVMessage(String type, String key, String val){
+        this.strType = type;
+        this.stsType = KVMessageTool.parseStringType(type);
+        this.key = key;
+        this.value = val;
+        this.message = type + " " + key + " " + val + "\r\n";
+    }
+
+    @Override
+    public String getKey(){
+        return key;
+    }
 	
-	/**
-	 * @return the value that is associated with this message, 
-	 * 		null if not value is associated.
-	 */
-	public String getValue();
-	
-	/**
-	 * @return a status string that is used to identify request types, 
-	 * response types and error types associated to the message.
-	 */
-	public StatusType getStatus();
-	
+    @Override
+    public String getValue(){
+        return value;
+    }
+
+    @Override
+    public StatusType getStatus(){
+        return stsType;
+    }
+
+    public String getStringStatus(){
+        return strType;
+    }
+
+    public String getMessage(){
+        return message;
+    }
+
+    public byte[] getByteMessage(){
+        return message.getBytes(StandardCharsets.UTF_8);
+    }
 }
-
-

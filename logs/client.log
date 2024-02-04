@@ -1,0 +1,226 @@
+2024-01-25 19:44:04,861 INFO  [main] root: Current log level is: ALL
+2024-01-25 19:44:26,354 INFO  [main] root: Current log level is: DEBUG
+2024-01-29 23:17:22,896 INFO  [main] root: Connect to server 127.0.0.1/8000!
+2024-01-29 23:17:22,897 INFO  [main] root: Connection established
+2024-01-29 23:17:34,416 ERROR [main] root: Unable to send PUT request!
+2024-01-29 23:17:34,416 INFO  [main] root: try to close connection ...
+2024-01-29 23:17:34,416 INFO  [main] root: tearing down the connection ...
+2024-01-29 23:17:34,416 INFO  [main] root: connection closed!
+2024-01-29 23:17:34,418 INFO  [main] root: Disconnect the server 127.0.0.1/8000!
+2024-01-29 23:17:34,419 ERROR [main] root: Unable to put 122: 818181 !
+java.net.SocketException: Socket closed
+	at java.base/java.net.SocketInputStream.socketRead0(Native Method)
+	at java.base/java.net.SocketInputStream.socketRead(SocketInputStream.java:115)
+	at java.base/java.net.SocketInputStream.read(SocketInputStream.java:168)
+	at java.base/java.net.SocketInputStream.read(SocketInputStream.java:140)
+	at java.base/java.net.SocketInputStream.read(SocketInputStream.java:200)
+	at shared.messages.KVMessageTool.receiveMessage(KVMessageTool.java:34)
+	at cmnct_client.KVStore.put(KVStore.java:93)
+	at app_kvClient.KVClient.put(KVClient.java:311)
+	at app_kvClient.KVClient.handleCommand(KVClient.java:104)
+	at app_kvClient.KVClient.run(KVClient.java:59)
+	at app_kvClient.KVClient.main(KVClient.java:43)
+2024-01-30 15:12:23,630 INFO  [main] root: Connect to server 127.0.0.1/8000!
+2024-01-30 15:12:23,630 INFO  [main] root: Connection established
+2024-01-30 15:15:20,763 INFO  [main] root: send GET request to the sever!
+2024-01-30 15:16:49,839 INFO  [main] root: Connect to server 127.0.0.1/8000!
+2024-01-30 15:24:04,783 INFO  [main] root: Connect to server 127.0.0.1/8000!
+2024-01-30 15:26:18,465 INFO  [main] root: Connection established
+2024-01-30 15:27:07,476 INFO  [main] root: Connect to server 127.0.0.1/8000!
+2024-01-30 15:30:02,093 INFO  [main] root: Connect to server 127.0.0.1/8000!
+2024-01-30 15:30:02,099 INFO  [main] root: Connection established
+2024-01-30 15:30:18,204 INFO  [main] root: send PUT request to the sever!
+2024-01-30 15:30:18,211 INFO  [main] root: receive PUT respond from the sever!
+2024-01-30 15:30:36,153 INFO  [main] root: send GET request to the sever!
+2024-01-30 15:30:36,200 INFO  [main] root: receive GET respond from the sever!
+2024-01-30 15:30:36,200 INFO  [main] root: Get 80808080:  SUCCESS!
+2024-01-30 15:31:11,161 INFO  [main] root: try to close connection ...
+2024-01-30 15:31:11,162 INFO  [main] root: tearing down the connection ...
+2024-01-30 15:31:11,162 INFO  [main] root: connection closed!
+2024-01-30 15:31:11,163 INFO  [main] root: Disconnect the server 127.0.0.1/8000!
+2024-01-30 15:31:29,257 INFO  [main] root: Application exit!
+2024-01-30 15:33:29,594 INFO  [main] root: Connect to server 127.0.0.1/8000!
+2024-01-30 15:33:29,598 INFO  [main] root: Connection established
+2024-01-30 15:33:54,821 ERROR [main] root: Unable to send PUT request!
+2024-01-30 15:33:54,822 INFO  [main] root: try to close connection ...
+2024-01-30 15:33:54,824 INFO  [main] root: tearing down the connection ...
+2024-01-30 15:33:54,826 INFO  [main] root: connection closed!
+2024-01-30 15:33:54,827 INFO  [main] root: Disconnect the server 127.0.0.1/8000!
+2024-01-30 15:33:54,830 ERROR [main] root: Unable to put hahah: 9000 !
+java.net.SocketException: Socket closed
+	at java.base/java.net.SocketInputStream.socketRead0(Native Method)
+	at java.base/java.net.SocketInputStream.socketRead(SocketInputStream.java:115)
+	at java.base/java.net.SocketInputStream.read(SocketInputStream.java:168)
+	at java.base/java.net.SocketInputStream.read(SocketInputStream.java:140)
+	at java.base/java.net.SocketInputStream.read(SocketInputStream.java:200)
+	at shared.messages.KVMessageTool.receiveMessage(KVMessageTool.java:34)
+	at cmnct_client.KVStore.put(KVStore.java:94)
+	at app_kvClient.KVClient.put(KVClient.java:311)
+	at app_kvClient.KVClient.handleCommand(KVClient.java:104)
+	at app_kvClient.KVClient.run(KVClient.java:59)
+	at app_kvClient.KVClient.main(KVClient.java:43)
+2024-01-30 15:35:07,144 ERROR [main] root: Could not establish connection!
+java.net.ConnectException: Connection refused (Connection refused)
+	at java.base/java.net.PlainSocketImpl.socketConnect(Native Method)
+	at java.base/java.net.AbstractPlainSocketImpl.doConnect(AbstractPlainSocketImpl.java:412)
+	at java.base/java.net.AbstractPlainSocketImpl.connectToAddress(AbstractPlainSocketImpl.java:255)
+	at java.base/java.net.AbstractPlainSocketImpl.connect(AbstractPlainSocketImpl.java:237)
+	at java.base/java.net.SocksSocketImpl.connect(SocksSocketImpl.java:392)
+	at java.base/java.net.Socket.connect(Socket.java:609)
+	at java.base/java.net.Socket.connect(Socket.java:558)
+	at java.base/java.net.Socket.<init>(Socket.java:454)
+	at java.base/java.net.Socket.<init>(Socket.java:231)
+	at cmnct_client.KVStore.connect(KVStore.java:51)
+	at app_kvClient.KVClient.newConnection(KVClient.java:244)
+	at app_kvClient.KVClient.connection(KVClient.java:233)
+	at app_kvClient.KVClient.handleCommand(KVClient.java:101)
+	at app_kvClient.KVClient.run(KVClient.java:59)
+	at app_kvClient.KVClient.main(KVClient.java:43)
+2024-01-30 15:35:07,145 INFO  [main] root: Disconnect the server 127.0.0.1/8000!
+2024-01-30 15:35:22,851 INFO  [main] root: Application exit!
+2024-01-30 17:24:44,689 INFO  [main] root: Connect to server 127.0.0.1/8000!
+2024-01-30 17:24:44,691 INFO  [main] root: Connection established
+2024-01-31 10:59:55,908 INFO  [main] root: Connect to server 127.0.0.1/8000!
+2024-01-31 10:59:55,910 INFO  [main] root: Connection established
+2024-01-31 11:00:16,445 INFO  [main] root: send PUT request to the sever!
+2024-01-31 11:00:16,452 INFO  [main] root: receive PUT respond from the sever!
+2024-01-31 11:00:16,453 INFO  [main] root: Put 80: 190 SUCCESS!
+2024-01-31 11:00:52,596 INFO  [main] root: send GET request to the sever!
+2024-01-31 11:00:52,641 INFO  [main] root: receive GET respond from the sever!
+2024-01-31 11:00:52,641 INFO  [main] root: Get 80: 190 SUCCESS!
+2024-01-31 11:01:18,716 INFO  [main] root: send PUT request to the sever!
+2024-01-31 11:01:18,761 INFO  [main] root: receive PUT respond from the sever!
+2024-01-31 11:01:18,761 INFO  [main] root: Put 80: 191 SUCCESS!
+2024-01-31 11:01:23,239 INFO  [main] root: send GET request to the sever!
+2024-01-31 11:01:23,284 INFO  [main] root: receive GET respond from the sever!
+2024-01-31 11:01:23,285 INFO  [main] root: Get 80: 191 SUCCESS!
+2024-01-31 11:02:56,936 INFO  [main] root: send PUT request to the sever!
+2024-01-31 11:02:56,980 INFO  [main] root: receive PUT respond from the sever!
+2024-01-31 11:02:56,981 INFO  [main] root: Put 82: 00 SUCCESS!
+2024-01-31 11:03:01,553 INFO  [main] root: send GET request to the sever!
+2024-01-31 11:03:01,599 ERROR [main] root: Unexpected things happen when tries to get 88 !
+java.lang.StringIndexOutOfBoundsException: begin 0, end -1, length 0
+	at java.base/java.lang.String.checkBoundsBeginEnd(String.java:3319)
+	at java.base/java.lang.String.substring(String.java:1874)
+	at shared.messages.KVMessageTool.parseMessage(KVMessageTool.java:84)
+	at shared.messages.KVMessageTool.receiveMessage(KVMessageTool.java:80)
+	at cmnct_client.KVStore.get(KVStore.java:113)
+	at app_kvClient.KVClient.get(KVClient.java:365)
+	at app_kvClient.KVClient.handleCommand(KVClient.java:90)
+	at app_kvClient.KVClient.run(KVClient.java:57)
+	at app_kvClient.KVClient.main(KVClient.java:41)
+2024-01-31 11:03:01,603 INFO  [main] root: try to close connection ...
+2024-01-31 11:03:01,603 INFO  [main] root: tearing down the connection ...
+2024-01-31 11:03:01,603 INFO  [main] root: connection closed!
+2024-01-31 11:03:01,604 INFO  [main] root: Disconnect the server 127.0.0.1/8000!
+2024-01-31 11:12:12,489 INFO  [main] root: Application exit!
+2024-01-31 11:21:26,938 INFO  [main] root: Connect to server 127.0.0.1/8000!
+2024-01-31 11:21:26,940 INFO  [main] root: Connection established
+2024-01-31 11:21:32,604 INFO  [main] root: send PUT request to the sever!
+2024-01-31 11:21:32,607 INFO  [main] root: receive PUT respond from the sever!
+2024-01-31 11:21:32,607 INFO  [main] root: Put apple123@#: orange-@+$ SUCCESS!
+2024-01-31 11:31:49,236 INFO  [main] root: send GET request to the sever!
+2024-01-31 11:31:49,279 INFO  [main] root: receive GET respond from the sever!
+2024-01-31 11:31:49,280 INFO  [main] root: Get apple123@#: orange-@+$ SUCCESS!
+2024-01-31 11:34:19,920 INFO  [main] root: send PUT request to the sever!
+2024-01-31 11:34:19,964 INFO  [main] root: receive PUT respond from the sever!
+2024-01-31 11:34:19,965 INFO  [main] root: Put dhkdnb&*&(): ()*}{": SUCCESS!
+2024-01-31 11:34:31,123 INFO  [main] root: send GET request to the sever!
+2024-01-31 11:34:31,168 INFO  [main] root: receive GET respond from the sever!
+2024-01-31 11:34:31,169 INFO  [main] root: Get dhkdnb&*&(): ()*}{": SUCCESS!
+2024-01-31 11:34:45,809 INFO  [main] root: send GET request to the sever!
+2024-01-31 11:34:45,852 INFO  [main] root: receive GET respond from the sever!
+2024-01-31 11:34:45,853 INFO  [main] root: Get apple123@#: orange-@+$ SUCCESS!
+2024-01-31 11:34:50,347 INFO  [main] root: try to close connection ...
+2024-01-31 11:34:50,347 INFO  [main] root: tearing down the connection ...
+2024-01-31 11:34:50,349 INFO  [main] root: connection closed!
+2024-01-31 11:34:50,349 INFO  [main] root: Disconnect the server 127.0.0.1/8000!
+2024-01-31 11:34:50,350 INFO  [main] root: Application exit!
+2024-01-31 11:35:41,999 INFO  [main] root: Connect to server 127.0.0.1/8000!
+2024-01-31 11:35:42,002 INFO  [main] root: Connection established
+2024-01-31 11:36:07,361 INFO  [main] root: send PUT request to the sever!
+2024-01-31 11:36:07,367 INFO  [main] root: receive PUT responce from the sever!
+2024-01-31 11:36:07,368 INFO  [main] root: Put apple123@#: orange-@+$ SUCCESS!
+2024-01-31 11:37:24,902 INFO  [main] root: try to close connection ...
+2024-01-31 11:37:24,903 INFO  [main] root: tearing down the connection ...
+2024-01-31 11:37:24,903 INFO  [main] root: connection closed!
+2024-01-31 11:37:24,904 INFO  [main] root: Disconnect the server 127.0.0.1/8000!
+2024-01-31 11:37:24,905 INFO  [main] root: Application exit!
+2024-01-31 11:38:21,786 INFO  [main] root: Connect to server 127.0.0.1/39391!
+2024-01-31 11:38:21,789 INFO  [main] root: Connection established
+2024-01-31 11:38:35,324 INFO  [main] root: send PUT request to the sever!
+2024-01-31 11:38:35,331 INFO  [main] root: receive PUT responce from the sever!
+2024-01-31 11:38:35,332 INFO  [main] root: Put apple123@#: orange-@+$ SUCCESS!
+2024-01-31 11:43:28,565 INFO  [main] root: try to close connection ...
+2024-01-31 11:43:28,565 INFO  [main] root: tearing down the connection ...
+2024-01-31 11:43:28,566 INFO  [main] root: connection closed!
+2024-01-31 11:43:28,567 INFO  [main] root: Disconnect the server 127.0.0.1/39391!
+2024-01-31 11:43:28,568 INFO  [main] root: Application exit!
+2024-01-31 11:52:45,268 INFO  [main] root: Connect to server 127.0.0.1/39391!
+2024-01-31 11:52:45,270 INFO  [main] root: Connection established
+2024-01-31 11:52:59,998 INFO  [main] root: send PUT request to the sever!
+2024-01-31 11:53:00,000 INFO  [main] root: receive PUT responce from the sever!
+2024-01-31 11:53:00,000 INFO  [main] root: Put hjhjhuo**: jkojio00 SUCCESS!
+2024-01-31 11:53:11,167 INFO  [main] root: send GET request to the sever!
+2024-01-31 11:53:11,212 INFO  [main] root: receive GET respond from the sever!
+2024-01-31 11:53:11,212 INFO  [main] root: Get hjhjhuo**: jkojio00
+2024-01-31 11:53:21,135 INFO  [main] root: try to close connection ...
+2024-01-31 11:53:21,136 INFO  [main] root: tearing down the connection ...
+2024-01-31 11:53:21,136 INFO  [main] root: connection closed!
+2024-01-31 11:53:21,137 INFO  [main] root: Disconnect the server 127.0.0.1/39391!
+2024-01-31 11:53:21,138 INFO  [main] root: Application exit!
+2024-01-31 12:24:54,147 INFO  [main] root: Connect to server 127.0.0.1/39391!
+2024-01-31 12:24:54,150 INFO  [main] root: Connection established
+2024-01-31 12:25:06,504 INFO  [main] root: send GET request to the sever!
+2024-01-31 12:25:06,512 ERROR [main] root: Unexpected things happen when tries to get hjhj !
+java.lang.StringIndexOutOfBoundsException: begin 0, end -1, length 0
+	at java.base/java.lang.String.checkBoundsBeginEnd(String.java:3319)
+	at java.base/java.lang.String.substring(String.java:1874)
+	at shared.messages.KVMessageTool.parseMessage(KVMessageTool.java:84)
+	at shared.messages.KVMessageTool.receiveMessage(KVMessageTool.java:80)
+	at cmnct_client.KVStore.get(KVStore.java:113)
+	at app_kvClient.KVClient.get(KVClient.java:362)
+	at app_kvClient.KVClient.handleCommand(KVClient.java:90)
+	at app_kvClient.KVClient.run(KVClient.java:57)
+	at app_kvClient.KVClient.main(KVClient.java:41)
+2024-01-31 12:25:06,517 INFO  [main] root: try to close connection ...
+2024-01-31 12:25:06,518 INFO  [main] root: tearing down the connection ...
+2024-01-31 12:25:06,518 INFO  [main] root: connection closed!
+2024-01-31 12:25:06,520 INFO  [main] root: Disconnect the server 127.0.0.1/39391!
+2024-01-31 12:27:03,853 INFO  [main] root: Application exit!
+2024-01-31 12:27:35,880 INFO  [main] root: Connect to server 127.0.0.1/39391!
+2024-01-31 12:27:35,882 INFO  [main] root: Connection established
+2024-01-31 12:27:41,869 INFO  [main] root: send GET request to the sever!
+2024-01-31 12:27:41,871 ERROR [main] root: Unexpected things happen when tries to get hjhjh !
+java.lang.StringIndexOutOfBoundsException: begin 0, end -1, length 0
+	at java.base/java.lang.String.checkBoundsBeginEnd(String.java:3319)
+	at java.base/java.lang.String.substring(String.java:1874)
+	at shared.messages.KVMessageTool.parseMessage(KVMessageTool.java:85)
+	at shared.messages.KVMessageTool.receiveMessage(KVMessageTool.java:80)
+	at cmnct_client.KVStore.get(KVStore.java:113)
+	at app_kvClient.KVClient.get(KVClient.java:362)
+	at app_kvClient.KVClient.handleCommand(KVClient.java:90)
+	at app_kvClient.KVClient.run(KVClient.java:57)
+	at app_kvClient.KVClient.main(KVClient.java:41)
+2024-01-31 12:27:41,872 INFO  [main] root: try to close connection ...
+2024-01-31 12:27:41,873 INFO  [main] root: tearing down the connection ...
+2024-01-31 12:27:41,874 INFO  [main] root: connection closed!
+2024-01-31 12:27:41,875 INFO  [main] root: Disconnect the server 127.0.0.1/39391!
+2024-01-31 12:30:44,801 INFO  [main] root: Application exit!
+2024-01-31 12:31:06,028 INFO  [main] root: Connect to server 127.0.0.1/39391!
+2024-01-31 12:31:06,031 INFO  [main] root: Connection established
+2024-01-31 12:31:09,280 INFO  [main] root: send GET request to the sever!
+2024-01-31 12:31:09,287 ERROR [main] root: Unexpected things happen when tries to get jjjj !
+java.lang.ArrayIndexOutOfBoundsException: Index 1 out of bounds for length 1
+	at shared.messages.KVMessageTool.parseMessage(KVMessageTool.java:103)
+	at shared.messages.KVMessageTool.receiveMessage(KVMessageTool.java:80)
+	at cmnct_client.KVStore.get(KVStore.java:113)
+	at app_kvClient.KVClient.get(KVClient.java:362)
+	at app_kvClient.KVClient.handleCommand(KVClient.java:90)
+	at app_kvClient.KVClient.run(KVClient.java:57)
+	at app_kvClient.KVClient.main(KVClient.java:41)
+2024-01-31 12:31:09,291 INFO  [main] root: try to close connection ...
+2024-01-31 12:31:09,293 INFO  [main] root: tearing down the connection ...
+2024-01-31 12:31:09,293 INFO  [main] root: connection closed!
+2024-01-31 12:31:09,293 INFO  [main] root: Disconnect the server 127.0.0.1/39391!
+2024-01-31 12:35:11,682 INFO  [main] root: Application exit!
