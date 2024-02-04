@@ -1,6 +1,7 @@
 # Introduction
 This design document will describe how our client and server communicate and break it into several parts to introduce. It includes client, communication logic of client and server and server storage disk. 
-![截屏2024-01-20 11.50.50.png](https://prod-files-secure.s3.us-west-2.amazonaws.com/89aaafca-0410-44d5-901b-1dc5ee5fe0c5/66cdc993-a29e-4978-b1c8-f21f59daf870/%E6%88%AA%E5%B1%8F2024-01-20_11.50.50.png)
+![1](https://github.com/IronDumpling/persistent-storage-server/assets/70104294/baaeeb07-438d-4397-8f7f-e99a79c4a019)
+
 # Client
 The client is implemented in the KVClient Class, which consists of two main components: the interactive UI for the Client Application and the execution of corresponding functionalities.
 
