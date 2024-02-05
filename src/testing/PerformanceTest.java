@@ -7,6 +7,9 @@ import junit.framework.TestCase;
 import shared.messages.IKVMessage;
 import shared.messages.IKVMessage.StatusType;
 import java.util.ArrayList;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 public class PerformanceTest extends TestCase {
 
@@ -20,33 +23,76 @@ public class PerformanceTest extends TestCase {
 	}
 
 	public void tearDown() {
-		kvClient.disconnect();
+        kvClient.disconnect();
 	}
 	
     @Test
     public void testPutGetRatio_8_2() {
 
-        createPutsAndGets (80, 20);
+        long totalTime = 0;
+        int testingCounter = 50;
+        int numPuts = 80;
+        int numGets = 20;
+        for(int i = 0 ; i < testingCounter; i++ ){
+            totalTime = totalTime + createPutsAndGets (numPuts, numGets);
+        }
+        double throughput = (double) (80 + 20) / (totalTime / (1000.0 * testingCounter));
+        System.out.println("ratio: " + numPuts +" to "+ numGets +" Latency: " + totalTime/testingCounter + " milliseconds");
+        System.out.println("ratio: " + numPuts +" to "+ numGets +" Throughput: " + throughput + " requests");
 
     }
 
-    // @Test
-    // public void testPutGetRatio_5_5() {
-    //     // Test with twice as many puts as gets
-    //     createPutsAndGets(50, 50);
-    // }
+    @Test
+    public void testPutGetRatio_5_5() {
+        long totalTime = 0;
+        int testingCounter = 50;
+        int numPuts = 50;
+        int numGets = 50;
+        for(int i = 0 ; i < testingCounter; i++ ){
+            totalTime = totalTime + createPutsAndGets (numPuts, numGets);
+        }
 
-    // @Test
-    // public void testPutGetRatio_2_8() {
-    //     // Test with twice as many gets as puts
-    //     createPutsAndGets(20, 80);
-    // }
+        double throughput = (double) (numPuts + numGets) / (totalTime / (1000.0 * testingCounter));
+        System.out.println("ratio: " + numPuts +" to "+ numGets +" Latency: " + totalTime/testingCounter + " milliseconds");
+        System.out.println("ratio: " + numPuts +" to "+ numGets +" Throughput: " + throughput + " requests");
 
-    public void createPutsAndGets(int numPuts, int numGets){
+    }
+
+    @Test
+    public void testPutGetRatio_2_8() {
+        // Test with twice as many gets as puts
+        long totalTime = 0;
+        int testingCounter = 50;
+        int numPuts = 20;
+        int numGets = 20;
+        for(int i = 0 ; i < testingCounter; i++ ){
+            totalTime = totalTime + createPutsAndGets (numPuts, numGets);
+        }
+
+        for(int i = 0 ; i < testingCounter; i++ ){
+            totalTime = totalTime + createPutsAndGets (0, 20);
+        }
+
+        for(int i = 0 ; i < testingCounter; i++ ){
+            totalTime = totalTime + createPutsAndGets (0, 20);
+        }
+
+        for(int i = 0 ; i < testingCounter; i++ ){
+            totalTime = totalTime + createPutsAndGets (0, 20);
+        }
+
+
+        double throughput = (double) (numPuts + 80) / (totalTime / (1000.0 * testingCounter));
+        System.out.println("ratio: " + numPuts +" to "+ 80 +" Latency: " + totalTime/testingCounter + " milliseconds");
+        System.out.println("ratio: " + numPuts +" to "+ 80 +" Throughput: " + throughput + " requests");
+
+    }
+
+    public long createPutsAndGets(int numPuts, int numGets){
         Exception ex = null;
         long startTime = System.currentTimeMillis();
         IKVMessage respond;
-
+        
         for (int i = 0; i < numPuts; i++) {
             String key = "key" + i;
             String value = "value" + i;
@@ -70,9 +116,8 @@ public class PerformanceTest extends TestCase {
 
         long endTime = System.currentTimeMillis();
         long latency = endTime - startTime;
-        double throughput = (double) (numPuts + numGets) / (latency / 1000.0);
-        System.out.println("ratio: " + numPuts +" to "+ numGets +" Latency: " + latency + " milliseconds");
-        System.out.println("ratio: " + numPuts +" to "+ numGets +" Throughput: " + throughput + " requests");
+        return latency;
+        
     }
 	
 	

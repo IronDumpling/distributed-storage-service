@@ -72,25 +72,28 @@ public class KVServerCmnct implements Runnable {
         while(isRunning){
             try {
                 KVMessage recMsg = KVMessageTool.receiveMessage(input);
-                
+                if (recMsg == null){
+                    isRunning = false;
+                    return;
+                }
                 KVMessage sendMsg;
                 switch (recMsg.getStatus()){
                     case GET:
                         sendMsg = server.get(recMsg.getKey());
                         KVMessageTool.sendMessage(sendMsg, output);
-                        logger.info("SEND \t<" + clientName + ">: '" + sendMsg.getMessage() + "'");
+                        //logger.info("SEND \t<" + clientName + ">: '" + sendMsg.getMessage() + "'");
                         break;
                     case PUT:
                         sendMsg = server.put(recMsg.getKey(), recMsg.getValue());
                         KVMessageTool.sendMessage(sendMsg, output);
-                        logger.info("SEND \t<" + clientName + ">: '" + sendMsg.getMessage() + "'");
+                        //logger.info("SEND \t<" + clientName + ">: '" + sendMsg.getMessage() + "'");
                         break;
                     case INFO:
                         break;
                     default:
                         sendMsg = handleFail();
                         KVMessageTool.sendMessage(sendMsg, output);
-                        logger.info("SEND \t<" + clientName + ">: " + recMsg.getStatus() + " ' " + sendMsg.getMessage() + "'");
+                        //logger.info("SEND \t<" + clientName + ">: " + recMsg.getStatus() + " ' " + sendMsg.getMessage() + "'");
                 }
 
             } catch (IOException ioe) {

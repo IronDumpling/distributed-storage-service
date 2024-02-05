@@ -28,6 +28,9 @@ public class KVMessageTool {
         /* read first char from stream */
         byte read = (byte) input.read();	
         boolean isReading = true;
+        if( read == Constants.ERROR){
+            return null;
+        }
 
         while(read != Constants.ERROR && isReading) {
             if(read == Constants.SLASH_N && 
