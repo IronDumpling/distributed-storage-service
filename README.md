@@ -67,14 +67,14 @@ In this performance test, we organize requests into groups of 100 and systematic
 
 ## Latency 
 | Cache strategy | 80% puts + 20% gets | 50% puts + 50% gets | 20% puts + 80% gets |
-| ---------|----------|----------|
+|----------------|---------------------|---------------------|---------------------|
 | FIFO | 5469 ms | 4935 ms | 4550 ms |
 | LFU | 5142 ms | 4785 ms | 4482 ms |
 | LRU | 5409 ms | 4827 ms | 4557 ms | 
 
 ## Throughput 
 | Cache strategy | 80% puts + 20% gets | 50% puts + 50% gets | 20% puts + 80% gets |
-| ---------|----------|----------|
+| ---------|----------|----------|-------|
 | FIFO | 18.2848 request/s | 20.2611 request/s | 21.9763 request/s |
 | LFU | 19.4456 request/s | 20.8951 request/s | 22.3081 request/s |
 | LRU | 18.4865 request/s | 20.7140 request/s | 21.9438 request/s | 
