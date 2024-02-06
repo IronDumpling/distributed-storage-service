@@ -183,11 +183,12 @@ public class KVStorageHelper {
     }
 
     private KVPair lineToKVPair(String line, int level) {
-        String[] fields = line.split(" ");
+        String[] fields = line.split(" ", 3); // TODO: limit space for containing space value
 
         int originLine = Integer.parseInt(fields[0].trim());
         String key = fields[1].trim();
         String value = fields[2].trim();
+        
 
         return new KVPair(key, value, false, level, originLine);
     }
