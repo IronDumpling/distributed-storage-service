@@ -116,6 +116,7 @@ public class KVStorageHelper {
 
             if (origin == null) return IKVMessage.StatusType.PUT_ERROR;
             if (Objects.equals(pair.getValue(), DELETE)) return IKVMessage.StatusType.DELETE_ERROR;
+            return IKVMessage.StatusType.PUT_ERROR;
         }
 
         DirMeta.FileMeta fMeta = dirMeta.getFileMeta(0);
