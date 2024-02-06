@@ -309,6 +309,7 @@ public class KVServer implements IKVServer {
 			type = storageHelper.put(new KVPair(key, value, false, -1, -1));
 		}
 
+	    // TODO: Combine PUT_PENDING and DELETE_PENDING to PENDING
 		if (type.equals(StatusType.PUT_PENDING) || type.equals(StatusType.DELETE_PENDING)) {
 			type = storageHelper.put(new KVPair(key, value, false, -1, -1));
 		}
