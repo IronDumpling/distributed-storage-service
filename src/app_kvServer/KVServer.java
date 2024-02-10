@@ -245,7 +245,7 @@ public class KVServer implements IKVServer {
                 printError("Unable to close client socket!", e);
             }
         }
-		// TODO: Clear Cache
+		clearCache();
 		kill();
 	}
 
