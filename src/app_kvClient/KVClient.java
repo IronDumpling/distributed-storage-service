@@ -83,7 +83,7 @@ public class KVClient implements IKVClient {
                 break;
             case 2:
                 switch (tokens[0].toLowerCase()){
-                    case "logLevel":
+                    case "loglevel":
                         logLevel(tokens[1]);
                         break;
                     case "get":
