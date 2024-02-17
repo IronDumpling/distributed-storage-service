@@ -14,8 +14,9 @@ public interface IKVMessage {
 		DELETE_ERROR, 	/* Delete - <key> */
 		FAILED,			/* failed to parse the request - <key> */
 		INFO,			/* INFO - <key> */
-		PUT_PENDING,    /* This should NEVER be returned - intermediate state when put not in cache */
-		DELETE_PENDING  /* This should NEVER be returned - intermediate state when delete not in cache */
+		PENDING  
+		/* This should NEVER be returned - intermediate state when delete not in cache */
+		/* This should NEVER be returned - intermediate state when put not in cache */
 	}
 
 	/**

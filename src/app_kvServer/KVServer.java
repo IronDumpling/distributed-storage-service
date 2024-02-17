@@ -204,8 +204,6 @@ public class KVServer implements IKVServer {
 			}
 		}
 
-		
-
 		printInfo("Server stopped.");
 	}
 
@@ -255,7 +253,7 @@ public class KVServer implements IKVServer {
 		try {
 			value = getKV(key);
 		} catch (ServerException e) {
-			return new KVMessage(e.status, key); // TODO: Use another method to handle error
+			return new KVMessage(e.status, key);
 		}
 		return new KVMessage(StatusType.GET_SUCCESS, key, value);
 	}
@@ -265,7 +263,7 @@ public class KVServer implements IKVServer {
 		try {
 			type = putKV(key, value);
 		} catch (ServerException e) {
-			type = e.status; // TODO: Use another method to handle error
+			type = e.status;
 		}
 
 		return new KVMessage(type, key, value);
@@ -310,7 +308,7 @@ public class KVServer implements IKVServer {
 		}
 
 	    // TODO: Combine PUT_PENDING and DELETE_PENDING to PENDING
-		if (type.equals(StatusType.PUT_PENDING) || type.equals(StatusType.DELETE_PENDING)) {
+		if (type.equals(StatusType.PENDING)) {
 			type = storageHelper.put(new KVPair(key, value, false, -1, -1));
 		}
 

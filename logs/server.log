@@ -5061,3 +5061,140 @@ java.lang.StringIndexOutOfBoundsException: begin 0, end -1, length 0
 	at cmnct_server.KVServerCmnct.operation(KVServerCmnct.java:74)
 	at cmnct_server.KVServerCmnct.run(KVServerCmnct.java:47)
 	at java.base/java.lang.Thread.run(Thread.java:829)
+2024-02-16 21:11:16,825 ERROR [main] root: path: ./data/mata
+2024-02-16 21:11:16,827 INFO  [main] root: Initialize server ...
+2024-02-16 21:11:16,829 INFO  [main] root: Server listening on port: 50000
+2024-02-16 21:12:26,495 ERROR [main] root: path: ./data/mata
+2024-02-16 21:12:26,498 INFO  [main] root: Initialize server ...
+2024-02-16 21:12:26,500 INFO  [main] root: Server listening on port: 50000
+2024-02-16 21:12:58,182 INFO  [main] root: Connected to localhost on port 60890
+2024-02-16 21:16:38,054 ERROR [main] root: path: ./data/mata
+2024-02-16 21:16:38,056 INFO  [main] root: Initialize server ...
+2024-02-16 21:16:38,058 INFO  [main] root: Server listening on port: 50000
+2024-02-16 21:16:52,426 INFO  [main] root: Connected to localhost on port 45850
+2024-02-16 21:16:52,427 INFO  [main] root: Connected to localhost on port 45866
+2024-02-16 21:16:52,479 INFO  [main] root: Connected to localhost on port 45868
+2024-02-16 21:16:52,481 INFO  [main] root: Connected to localhost on port 45880
+2024-02-16 21:16:52,502 INFO  [main] root: Connected to localhost on port 45894
+2024-02-16 21:16:52,555 INFO  [main] root: Connected to localhost on port 45898
+2024-02-16 21:16:52,626 INFO  [main] root: Connected to localhost on port 45912
+2024-02-16 21:16:52,650 INFO  [main] root: Connected to localhost on port 45928
+2024-02-16 21:16:52,650 INFO  [main] root: Connected to localhost on port 45944
+2024-02-16 21:16:52,651 INFO  [main] root: Connected to localhost on port 45946
+2024-02-16 21:16:52,653 INFO  [main] root: Connected to localhost on port 45960
+2024-02-16 21:16:52,654 INFO  [main] root: Connected to localhost on port 45966
+2024-02-16 21:16:52,699 INFO  [main] root: Connected to localhost on port 45980
+2024-02-16 21:16:52,747 INFO  [main] root: Connected to localhost on port 45990
+2024-02-16 21:16:52,770 INFO  [main] root: Connected to localhost on port 45996
+2024-02-16 21:16:52,902 INFO  [main] root: Connected to localhost on port 46000
+2024-02-16 21:16:52,920 INFO  [main] root: Connected to localhost on port 46002
+2024-02-16 21:16:52,934 INFO  [main] root: Connected to localhost on port 46012
+2024-02-16 21:17:00,926 ERROR [Thread-9] root: Error! Connection lost!
+java.net.SocketException: Socket closed
+	at java.base/java.net.SocketInputStream.socketRead0(Native Method)
+	at java.base/java.net.SocketInputStream.socketRead(SocketInputStream.java:115)
+	at java.base/java.net.SocketInputStream.read(SocketInputStream.java:168)
+	at java.base/java.net.SocketInputStream.read(SocketInputStream.java:140)
+	at java.base/java.net.SocketInputStream.read(SocketInputStream.java:200)
+	at shared.messages.KVMessageTool.receiveMessage(KVMessageTool.java:29)
+	at cmnct_server.KVServerCmnct.operation(KVServerCmnct.java:74)
+	at cmnct_server.KVServerCmnct.run(KVServerCmnct.java:47)
+	at java.base/java.lang.Thread.run(Thread.java:829)
+2024-02-16 21:17:00,926 ERROR [Thread-15] root: Error! Connection lost!
+java.net.SocketException: Socket closed
+	at java.base/java.net.SocketInputStream.socketRead0(Native Method)
+	at java.base/java.net.SocketInputStream.socketRead(SocketInputStream.java:115)
+	at java.base/java.net.SocketInputStream.read(SocketInputStream.java:168)
+	at java.base/java.net.SocketInputStream.read(SocketInputStream.java:140)
+	at java.base/java.net.SocketInputStream.read(SocketInputStream.java:200)
+	at shared.messages.KVMessageTool.receiveMessage(KVMessageTool.java:29)
+	at cmnct_server.KVServerCmnct.operation(KVServerCmnct.java:74)
+	at cmnct_server.KVServerCmnct.run(KVServerCmnct.java:47)
+	at java.base/java.lang.Thread.run(Thread.java:829)
+2024-02-16 21:17:00,926 ERROR [Thread-16] root: Error! Connection lost!
+java.net.SocketException: Socket closed
+	at java.base/java.net.SocketInputStream.socketRead0(Native Method)
+	at java.base/java.net.SocketInputStream.socketRead(SocketInputStream.java:115)
+	at java.base/java.net.SocketInputStream.read(SocketInputStream.java:168)
+	at java.base/java.net.SocketInputStream.read(SocketInputStream.java:140)
+	at java.base/java.net.SocketInputStream.read(SocketInputStream.java:200)
+	at shared.messages.KVMessageTool.receiveMessage(KVMessageTool.java:29)
+	at cmnct_server.KVServerCmnct.operation(KVServerCmnct.java:74)
+	at cmnct_server.KVServerCmnct.run(KVServerCmnct.java:47)
+	at java.base/java.lang.Thread.run(Thread.java:829)
+2024-02-16 21:17:00,926 ERROR [Thread-1] root: Error! Connection lost!
+java.net.SocketException: Socket closed
+	at java.base/java.net.SocketInputStream.socketRead0(Native Method)
+	at java.base/java.net.SocketInputStream.socketRead(SocketInputStream.java:115)
+	at java.base/java.net.SocketInputStream.read(SocketInputStream.java:168)
+	at java.base/java.net.SocketInputStream.read(SocketInputStream.java:140)
+	at java.base/java.net.SocketInputStream.read(SocketInputStream.java:200)
+	at shared.messages.KVMessageTool.receiveMessage(KVMessageTool.java:29)
+	at cmnct_server.KVServerCmnct.operation(KVServerCmnct.java:74)
+	at cmnct_server.KVServerCmnct.run(KVServerCmnct.java:47)
+	at java.base/java.lang.Thread.run(Thread.java:829)
+2024-02-16 21:17:00,926 ERROR [Thread-18] root: Error! Connection lost!
+java.net.SocketException: Socket closed
+	at java.base/java.net.SocketInputStream.socketRead0(Native Method)
+	at java.base/java.net.SocketInputStream.socketRead(SocketInputStream.java:115)
+	at java.base/java.net.SocketInputStream.read(SocketInputStream.java:168)
+	at java.base/java.net.SocketInputStream.read(SocketInputStream.java:140)
+	at java.base/java.net.SocketInputStream.read(SocketInputStream.java:200)
+	at shared.messages.KVMessageTool.receiveMessage(KVMessageTool.java:29)
+	at cmnct_server.KVServerCmnct.operation(KVServerCmnct.java:74)
+	at cmnct_server.KVServerCmnct.run(KVServerCmnct.java:47)
+	at java.base/java.lang.Thread.run(Thread.java:829)
+2024-02-16 21:17:00,926 ERROR [Thread-10] root: Error! Connection lost!
+java.net.SocketException: Socket closed
+	at java.base/java.net.SocketInputStream.socketRead0(Native Method)
+	at java.base/java.net.SocketInputStream.socketRead(SocketInputStream.java:115)
+	at java.base/java.net.SocketInputStream.read(SocketInputStream.java:168)
+	at java.base/java.net.SocketInputStream.read(SocketInputStream.java:140)
+	at java.base/java.net.SocketInputStream.read(SocketInputStream.java:200)
+	at shared.messages.KVMessageTool.receiveMessage(KVMessageTool.java:29)
+	at cmnct_server.KVServerCmnct.operation(KVServerCmnct.java:74)
+	at cmnct_server.KVServerCmnct.run(KVServerCmnct.java:47)
+	at java.base/java.lang.Thread.run(Thread.java:829)
+2024-02-16 21:17:00,926 ERROR [Thread-17] root: Error! Connection lost!
+java.net.SocketException: Socket closed
+	at java.base/java.net.SocketInputStream.socketRead0(Native Method)
+	at java.base/java.net.SocketInputStream.socketRead(SocketInputStream.java:115)
+	at java.base/java.net.SocketInputStream.read(SocketInputStream.java:168)
+	at java.base/java.net.SocketInputStream.read(SocketInputStream.java:140)
+	at java.base/java.net.SocketInputStream.read(SocketInputStream.java:200)
+	at shared.messages.KVMessageTool.receiveMessage(KVMessageTool.java:29)
+	at cmnct_server.KVServerCmnct.operation(KVServerCmnct.java:74)
+	at cmnct_server.KVServerCmnct.run(KVServerCmnct.java:47)
+	at java.base/java.lang.Thread.run(Thread.java:829)
+2024-02-16 21:17:00,926 ERROR [Thread-13] root: Error! Connection lost!
+java.net.SocketException: Socket closed
+	at java.base/java.net.SocketInputStream.socketRead0(Native Method)
+	at java.base/java.net.SocketInputStream.socketRead(SocketInputStream.java:115)
+	at java.base/java.net.SocketInputStream.read(SocketInputStream.java:168)
+	at java.base/java.net.SocketInputStream.read(SocketInputStream.java:140)
+	at java.base/java.net.SocketInputStream.read(SocketInputStream.java:200)
+	at shared.messages.KVMessageTool.receiveMessage(KVMessageTool.java:29)
+	at cmnct_server.KVServerCmnct.operation(KVServerCmnct.java:74)
+	at cmnct_server.KVServerCmnct.run(KVServerCmnct.java:47)
+	at java.base/java.lang.Thread.run(Thread.java:829)
+2024-02-16 21:17:00,928 INFO  [main] root: Connected to localhost on port 46014
+2024-02-16 21:18:05,411 ERROR [main] root: path: ./data/mata
+2024-02-16 21:18:05,413 INFO  [main] root: Initialize server ...
+2024-02-16 21:18:05,415 INFO  [main] root: Server listening on port: 50000
+2024-02-16 21:18:11,717 INFO  [main] root: Connected to localhost on port 35474
+2024-02-16 21:18:11,723 INFO  [main] root: Connected to localhost on port 35488
+2024-02-16 21:18:11,771 INFO  [main] root: Connected to localhost on port 35490
+2024-02-16 21:18:11,774 INFO  [main] root: Connected to localhost on port 35502
+2024-02-16 21:18:11,822 INFO  [main] root: Connected to localhost on port 35518
+2024-02-16 21:18:11,871 INFO  [main] root: Connected to localhost on port 35528
+2024-02-16 21:18:11,876 INFO  [main] root: Connected to localhost on port 35542
+2024-02-16 21:18:11,882 INFO  [main] root: Connected to localhost on port 35544
+2024-02-16 21:18:11,884 INFO  [main] root: Connected to localhost on port 35550
+2024-02-16 21:18:11,885 INFO  [main] root: Connected to localhost on port 35558
+2024-02-16 21:18:11,886 INFO  [main] root: Connected to localhost on port 35562
+2024-02-16 21:18:11,887 INFO  [main] root: Connected to localhost on port 35566
+2024-02-16 21:18:11,931 INFO  [main] root: Connected to localhost on port 35570
+2024-02-16 21:18:11,979 INFO  [main] root: Connected to localhost on port 35576
+2024-02-16 21:18:11,985 INFO  [main] root: Connected to localhost on port 35590
+2024-02-16 21:18:12,118 INFO  [main] root: Connected to localhost on port 35596
+2024-02-16 21:18:13,974 INFO  [main] root: Connected to localhost on port 35608

@@ -39,7 +39,7 @@ public class PerformanceTest extends TestCase {
         double throughput = (double) (80 + 20) / (totalTime / (1000.0 * testingCounter));
         System.out.println("ratio: " + numPuts +" to "+ numGets +" Latency: " + totalTime/testingCounter + " milliseconds");
         System.out.println("ratio: " + numPuts +" to "+ numGets +" Throughput: " + throughput + " requests");
-
+        // TODO: Troughput should be measured in server side
     }
 
     @Test

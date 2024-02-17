@@ -55,13 +55,13 @@ public abstract class Cache {
                 return IKVMessage.StatusType.DELETE_SUCCESS;
             }
             // not in cache, leave the problem to storage
-            return IKVMessage.StatusType.DELETE_PENDING;
+            return IKVMessage.StatusType.PENDING;
         }
 
         if (map.containsKey(pair.getKey())) {
             return IKVMessage.StatusType.PUT_UPDATE;
         }
 
-        return IKVMessage.StatusType.PUT_PENDING;
+        return IKVMessage.StatusType.PENDING;
     }
 }

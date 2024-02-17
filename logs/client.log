@@ -224,3 +224,17 @@ java.lang.ArrayIndexOutOfBoundsException: Index 1 out of bounds for length 1
 2024-01-31 12:31:09,293 INFO  [main] root: connection closed!
 2024-01-31 12:31:09,293 INFO  [main] root: Disconnect the server 127.0.0.1/39391!
 2024-01-31 12:35:11,682 INFO  [main] root: Application exit!
+2024-02-16 21:12:39,751 INFO  [main] root: Current log level is: ALL
+2024-02-16 21:12:58,171 INFO  [main] root: Connect to server 127.0.0.1/50000!
+2024-02-16 21:12:58,179 INFO  [main] root: Connection established
+2024-02-16 21:13:10,708 INFO  [main] root: send PUT request to the sever!
+2024-02-16 21:13:10,736 INFO  [main] root: receive PUT responce from the sever!
+2024-02-16 21:13:10,736 INFO  [main] root: Put 80: 80 808 8080 SUCCESS!
+2024-02-16 21:13:16,045 INFO  [main] root: send GET request to the sever!
+2024-02-16 21:13:16,088 INFO  [main] root: receive GET respond from the sever!
+2024-02-16 21:13:16,089 INFO  [main] root: Get 80: 80 808 8080
+2024-02-16 21:13:29,333 INFO  [main] root: try to close connection ...
+2024-02-16 21:13:29,333 INFO  [main] root: tearing down the connection ...
+2024-02-16 21:13:29,335 INFO  [main] root: connection closed!
+2024-02-16 21:13:29,336 INFO  [main] root: Disconnect the server 127.0.0.1/50000!
+2024-02-16 21:13:29,337 INFO  [main] root: Application exit!
