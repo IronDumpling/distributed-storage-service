@@ -10,115 +10,86 @@ import java.util.ArrayList;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.List;
 
 public class PerformanceTest extends TestCase {
 
 	private KVStore kvClient;
+
 	
 	public void setUp() {
-		kvClient = new KVStore("localhost", 50000);
-		try {
-			kvClient.connect();
-		} catch (Exception e) {}
+		// kvClient = new KVStore("localhost", 50000);
+		// try {
+		// 	kvClient.connect();
+		// } catch (Exception e) {}
 	}
 
-	public void tearDown() {
-        kvClient.disconnect();
-	}
+	// public void tearDown() {
+    //     kvClient.disconnect();
+
+	// }
 	
     @Test
     public void testPutGetRatio_8_2() {
-
-        long totalTime = 0;
-        int testingCounter = 50;
         int numPuts = 80;
         int numGets = 20;
-        for(int i = 0 ; i < testingCounter; i++ ){
-            totalTime = totalTime + createPutsAndGets (numPuts, numGets);
-        }
-        double throughput = (double) (80 + 20) / (totalTime / (1000.0 * testingCounter));
-        System.out.println("ratio: " + numPuts +" to "+ numGets +" Latency: " + totalTime/testingCounter + " milliseconds");
-        System.out.println("ratio: " + numPuts +" to "+ numGets +" Throughput: " + throughput + " requests");
-        // TODO: Troughput should be measured in server side
+        int numClient = 10;
+        multiClientTest(numClient, numPuts, numGets);
     }
+
+    
 
     @Test
     public void testPutGetRatio_5_5() {
-        long totalTime = 0;
-        int testingCounter = 50;
         int numPuts = 50;
         int numGets = 50;
-        for(int i = 0 ; i < testingCounter; i++ ){
-            totalTime = totalTime + createPutsAndGets (numPuts, numGets);
-        }
-
-        double throughput = (double) (numPuts + numGets) / (totalTime / (1000.0 * testingCounter));
-        System.out.println("ratio: " + numPuts +" to "+ numGets +" Latency: " + totalTime/testingCounter + " milliseconds");
-        System.out.println("ratio: " + numPuts +" to "+ numGets +" Throughput: " + throughput + " requests");
-
+        int numClient = 10;
+        multiClientTest(numClient, numPuts, numGets);
     }
 
     @Test
     public void testPutGetRatio_2_8() {
-        // Test with twice as many gets as puts
-        long totalTime = 0;
-        int testingCounter = 50;
         int numPuts = 20;
-        int numGets = 20;
-        for(int i = 0 ; i < testingCounter; i++ ){
-            totalTime = totalTime + createPutsAndGets (numPuts, numGets);
-        }
-
-        for(int i = 0 ; i < testingCounter; i++ ){
-            totalTime = totalTime + createPutsAndGets (0, 20);
-        }
-
-        for(int i = 0 ; i < testingCounter; i++ ){
-            totalTime = totalTime + createPutsAndGets (0, 20);
-        }
-
-        for(int i = 0 ; i < testingCounter; i++ ){
-            totalTime = totalTime + createPutsAndGets (0, 20);
-        }
-
-
-        double throughput = (double) (numPuts + 80) / (totalTime / (1000.0 * testingCounter));
-        System.out.println("ratio: " + numPuts +" to "+ 80 +" Latency: " + totalTime/testingCounter + " milliseconds");
-        System.out.println("ratio: " + numPuts +" to "+ 80 +" Throughput: " + throughput + " requests");
-
+        int numGets = 80;
+        int numClient = 10;
+        multiClientTest(numClient, numPuts, numGets);
     }
 
-    public long createPutsAndGets(int numPuts, int numGets){
-        Exception ex = null;
-        long startTime = System.currentTimeMillis();
-        IKVMessage respond;
-        
-        for (int i = 0; i < numPuts; i++) {
-            String key = "key" + i;
-            String value = "value" + i;
-            try {
-                respond = kvClient.put(key, value);
-            } catch (Exception e) {
-                ex = e;
-            }
-            assertTrue(ex == null);
+	public void multiClientTest (int numClient, int numPuts, int numGets){
+        List<Thread> threads = new ArrayList<>();
+        List<Long> latencies = new ArrayList<>();
+        long totalTime = 0;
+  
+        for (int i = 0; i < numClient; i++) {
+            ClientThread clientThread = new ClientThread(latencies, numPuts, numGets);
+            Thread thread = new Thread(clientThread);
+            threads.add(thread);
         }
 
-        for (int i = 0; i < numGets; i++) {
-            String key = "key" + i;
-            try {
-                kvClient.get(key);
-            } catch (Exception e) {
-                ex = e;
-            }
-            assertTrue(ex == null);
+        for (Thread thread : threads) {
+            thread.start();
         }
 
-        long endTime = System.currentTimeMillis();
-        long latency = endTime - startTime;
-        return latency;
+        // Wait for all threads to finish
+        for (Thread thread : threads) {
+            try {
+                thread.join();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+
+        // Calculate average latency
         
+        for (long latency : latencies) {
+            totalTime += latency;
+        }
+        double averageLatency = (double) totalTime / numClient;
+
+        //System.out.println("Average Latency across all clients: " + averageLatency + " milliseconds");
+        double throughput = (double) (80 + 20) / (totalTime / (1000.0 * numClient));
+        System.out.println("ratio: " + numPuts +" to "+ numGets +" Latency: " + averageLatency + " milliseconds");
+        System.out.println("ratio: " + numPuts +" to "+ numGets +" Throughput: " + throughput + " requests");
     }
-	
 	
 }
