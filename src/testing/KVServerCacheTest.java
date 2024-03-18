@@ -2,7 +2,7 @@ package testing;
 
 import app_kvServer.KVServer;
 import app_kvServer.ServerException;
-import constants.Constants;
+import shared.Constants;
 import junit.framework.TestCase;
 
 import org.junit.Test;

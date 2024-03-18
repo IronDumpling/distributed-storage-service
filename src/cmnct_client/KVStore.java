@@ -1,6 +1,5 @@
 package cmnct_client;
 
-import shared.messages.IKVMessage;
 import logger.LogSetup;
 import java.io.IOException;
 import java.io.InputStream;
@@ -9,6 +8,8 @@ import java.net.Socket;
 import java.net.UnknownHostException;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.Map;
+import java.util.HashMap;
 
 import org.apache.log4j.Logger;
 
@@ -16,8 +17,12 @@ import shared.messages.KVMessage;
 import shared.messages.IKVMessage;
 import shared.messages.IKVMessage.StatusType;
 import shared.messages.KVMessageTool;
+import java.net.InetSocketAddress;
 
-import constants.Constants;
+import shared.Constants;
+import shared.KVMeta;
+import shared.KVUtils;
+import java.math.BigInteger;
 
 public class KVStore implements KVCommInterface  {
 
@@ -28,6 +33,7 @@ public class KVStore implements KVCommInterface  {
 	private InputStream input; 
 	private SocketStatus status = SocketStatus.DISCONNECTED;
 	private String server = "";
+	private KVMeta metaData;
 	
 	/**
 	 * Initialize KVStore with address and port of KVServer
@@ -40,7 +46,8 @@ public class KVStore implements KVCommInterface  {
 	public KVStore(String address, int port) {
 		this.address = address;
 		this.port =  port;
-		this.server = this.address + "/" + this.port;		
+		this.server = this.address + "/" + this.port;	
+		this.metaData = null;	
 	}
 
 	@Override
@@ -65,7 +72,6 @@ public class KVStore implements KVCommInterface  {
 
 			output = clientSocket.getOutputStream();
 			input = clientSocket.getInputStream();
-			
 			KVMessageTool.receiveMessage(input);
 			logger.info("Connection established");
 		} catch (UnknownHostException e) {
@@ -75,7 +81,6 @@ public class KVStore implements KVCommInterface  {
         } catch (IOException e) {
             logger.error("Could not establish connection!", e);
 			setSocketStatus(SocketStatus.DISCONNECTED);
-			// throw e;
 			throw e;
 		}
 	}
@@ -108,10 +113,15 @@ public class KVStore implements KVCommInterface  {
 
 	@Override
 	public IKVMessage put(String key, String value) throws Exception {
-		IKVMessage receiveMessage;
-		if(!IsConnected()){
+		return putInKvMessage(key, value);
+	}
+
+	public IKVMessage putInKvMessage(String key, String value) throws Exception{
+		IKVMessage receiveMessage = null;
+		IKVMessage reply;
+		if(!IsConnected()) {
 			receiveMessage = null;
-			throw new IOException("No server connection!");
+			throw new IOException("Unable to connect to server due to NO AVAIABLE SERVER!");	
 		}
 		
 		try {
@@ -120,9 +130,70 @@ public class KVStore implements KVCommInterface  {
 		} catch (Exception e) {
 			logger.error("Unable to send PUT request!");
 			disconnect();
-			throw e;
+			Boolean isConnected = false;
+			if(metaData!=null){
+				for (Map.Entry<String, BigInteger[]> entry : metaData.getMetaWrite().entrySet()) {
+					this.address = entry.getKey().split(":")[0];
+					this.port = Integer.parseInt(entry.getKey().split(":")[1]);
+					this.server = this.server = this.address + "/" + this.port;
+					isConnected = tryConnection();
+					if (isConnected == true){
+						break;
+					}
+				}
+			}else{
+				logger.error("metaData is empty!");
+			}
+			if(!isConnected){
+				disconnect();
+				throw e;
+			}
+			try {
+				KVMessageTool.sendMessage(new KVMessage(StatusType.GET, key), output);
+				logger.info("send PUT request to the sever!");
+			}catch (Exception e2) {
+				disconnect();
+				throw e2;
+			}
 		} finally {
 			receiveMessage = KVMessageTool.receiveMessage(input);
+			if(receiveMessage.getStatus() == StatusType.SERVER_NOT_RESPONSIBLE){
+				try{
+					KVMessageTool.sendMessage(new KVMessage(StatusType.META, "Request for META"), output);
+				
+				}catch (Exception e) {
+					logger.error("Unable to send mataData request!");
+					disconnect();
+					throw e;
+				} finally {
+					reply = KVMessageTool.receiveMessage(input);
+					receiveMessage = reply;
+					if(receiveMessage.getStatus() != StatusType.META_UPDATE){
+						logger.error("Unable to update metaData!");
+						disconnect();
+					}
+
+					this.metaData = (KVMeta) reply;
+					if(this.metaData!=null){
+						logger.info("receive metaData from the sever!");
+					}else{
+						logger.info("receive empty metaData from the sever!");
+					}
+	
+					String[] addressAndPort = metaData.readKey(key);
+					if(addressAndPort == null){
+						KVUtils.printInfo("NO record on the server!", null);
+					}else{
+						disconnect();
+						this.address = addressAndPort[0];
+						this.port =  Integer.parseInt(addressAndPort[1]);
+						this.server = this.address + "/" + this.port;
+						connect();
+						receiveMessage = putInKvMessage(key,value);
+						return receiveMessage;
+					}
+				}
+			}
 			logger.info("receive PUT responce from the sever!");
 		}
 		return receiveMessage;
@@ -130,10 +201,14 @@ public class KVStore implements KVCommInterface  {
 
 	@Override
 	public IKVMessage get(String key) throws Exception {
+		return getInKvMessage(key);
+	}
+
+	public IKVMessage getInKvMessage(String key) throws Exception{
 		IKVMessage receiveMessage;
 		if(!IsConnected()) {
 			receiveMessage = null;
-			throw new IOException("No server connection!");
+			throw new IOException("Unable to connect to server!");
 		}
 		try {
 			KVMessageTool.sendMessage(new KVMessage(StatusType.GET, key), output);
@@ -141,13 +216,148 @@ public class KVStore implements KVCommInterface  {
 		} catch (Exception e) {
 			logger.error("Unable to send GET request!");
 			disconnect();
-			throw e;
+			Boolean isConnected = false;
+			if(metaData!=null){
+				for (Map.Entry<String, BigInteger[]> entry : metaData.getMetaWrite().entrySet()) {
+					this.address = entry.getKey().split(":")[0];
+					this.port = Integer.parseInt(entry.getKey().split(":")[1]);
+					this.server = this.server = this.address + "/" + this.port;
+					isConnected = tryConnection();
+					if (isConnected == true){
+						break;
+					}
+				}
+			}else{
+				logger.error("metaData is empty!");
+			}
+			if(!isConnected){
+				disconnect();
+				throw e;
+			}
+			try {
+				KVMessageTool.sendMessage(new KVMessage(StatusType.GET, key), output);
+				logger.info("send GET request to the sever!");
+			}catch (Exception e2) {
+				disconnect();
+				throw e2;
+			}
 		}finally{
 			receiveMessage = KVMessageTool.receiveMessage(input);
+
+			if(receiveMessage.getStatus() == StatusType.SERVER_NOT_RESPONSIBLE){
+				try{
+					KVMessageTool.sendMessage(new KVMessage(StatusType.META), output);
+					logger.info("Unable to send mataData request!");
+				}catch (Exception e) {
+					logger.error("Unable to send mataData request!");
+					disconnect();
+					throw e;
+				} finally {
+					IKVMessage reply = KVMessageTool.receiveMessage(input);
+					receiveMessage = reply;
+
+					if(receiveMessage.getStatus() != StatusType.META_UPDATE){
+						logger.error("Unable to update metaData!");
+						disconnect();
+					}
+
+					this.metaData = (KVMeta)reply;
+					if(this.metaData!=null){
+						logger.info("receive metaData from the sever!");
+					}else{
+						logger.info("receive empty metaData from the sever!");
+					}
+	
+					String[] addressAndPort = metaData.readKey(key);
+					if(addressAndPort == null){
+						KVUtils.printInfo("NO record on the server!", null);
+					}else{
+						disconnect();
+						this.address = addressAndPort[0];
+						this.port =  Integer.parseInt(addressAndPort[1]);
+						this.server = this.address + "/" + this.port;
+						connect();
+						receiveMessage = getInKvMessage(key);
+						return receiveMessage;
+					}
+						
+				}
+
+			}
 			logger.info("receive GET respond from the sever!");
 		}
 		return receiveMessage;
 	}
+
+	
+	public IKVMessage keyrange() throws Exception {
+		IKVMessage receiveMessage;
+		if(!IsConnected()) {
+			receiveMessage = null;
+			throw new IOException("Unable to connect to server!");	
+		}
+		try {
+			KVMessageTool.sendMessage(new KVMessage(StatusType.META), output);
+			logger.info("send metaData request to the sever!");
+		} catch (Exception e) {
+			logger.error("Unable to send metaData request!");
+			disconnect();
+			Boolean isConnected = false;
+			if(metaData!=null){
+				for (Map.Entry<String, BigInteger[]> entry : metaData.getMetaWrite().entrySet()) {
+					this.address = entry.getKey().split(":")[0];
+					this.port = Integer.parseInt(entry.getKey().split(":")[1]);
+					this.server = this.server = this.address + "/" + this.port;
+					isConnected = tryConnection();
+					if (isConnected == true){
+						break;
+					}
+					logger.error("this address is incorrect!");
+				}
+			}else{
+				logger.error("metaData is empty!");
+			}
+			if(!isConnected){
+				disconnect();
+				throw e;
+			}
+
+			try {
+				KVMessageTool.sendMessage(new KVMessage(StatusType.META), output);
+				logger.info("send metaData request to the sever!");
+			}catch (Exception e2) {
+				disconnect();
+				throw e2;
+			}
+			
+		}finally{
+			receiveMessage = KVMessageTool.receiveMessage(input);
+			if(receiveMessage instanceof KVMeta){
+				this.metaData = (KVMeta)receiveMessage;
+				logger.info("receive new metaData from the sever!");
+			}else{
+				KVUtils.printError("Receive message is not an instance of KVMeta", null, logger);
+			}
+		}
+		return receiveMessage;
+	}
+
+	public boolean tryConnection(){
+		try {
+			clientSocket = new Socket(address,port);
+			setSocketStatus(SocketStatus.CONNECTED);
+			setRunning(true);
+			output = clientSocket.getOutputStream();
+			input = clientSocket.getInputStream();
+			KVMessageTool.receiveMessage(input);
+			logger.info("Connection established");
+			return true;
+		} catch (IOException e) {
+			this.status = SocketStatus.DISCONNECTED;
+			return false;
+		}
+	}
+
 
 	public boolean isRunning() {
 		return running;
@@ -157,7 +367,7 @@ public class KVStore implements KVCommInterface  {
 		running = run;
 	}
 
-	private boolean IsConnected() throws IOException {
+	public boolean IsConnected() throws IOException {
 		if(status == SocketStatus.DISCONNECTED){
             logger.error("No server connection!", null);
             return false;
@@ -184,7 +394,7 @@ public class KVStore implements KVCommInterface  {
 				}
 			}
 			throw ioe;
-		}
+		} 
 		return isConnected;
 	}
 
@@ -192,8 +402,6 @@ public class KVStore implements KVCommInterface  {
 		setRunning(false);
 		logger.info("tearing down the connection ...");
 		if (clientSocket != null) {
-			//input.close();
-			//output.close();
 			clientSocket.close();
 			clientSocket = null;
 			logger.info("connection closed!");
@@ -217,5 +425,24 @@ public class KVStore implements KVCommInterface  {
 	
 	public SocketStatus getSocketStatus(){
 		return status;
+	}
+
+	private void redirectConnection(){
+
+	}
+
+	/* For ECS Cmnct */
+	public void metaUpdate(KVMeta meta) throws IOException{
+		if(!IsConnected()){
+			throw new IOException("No server connection!");
+		}
+
+		try {
+			KVMessageTool.sendMessage(meta, output);
+			KVUtils.printSuccess("Send META_UPDATE request!", logger);
+		} catch (Exception e) {
+			KVUtils.printError("Unable to send META_UPDATE request!", e, logger);
+			throw e;
+		}
 	}
 }

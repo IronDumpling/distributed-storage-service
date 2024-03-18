@@ -1,7 +1,7 @@
 package app_kvServer.cache;
 
-import app_kvServer.KVPair;
-import constants.Constants;
+import shared.KVPair;
+import shared.Constants;
 import shared.messages.IKVMessage;
 
 import java.util.ArrayList;

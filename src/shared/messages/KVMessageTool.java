@@ -6,20 +6,24 @@ import java.io.OutputStream;
 
 import java.nio.charset.StandardCharsets;
 
+import java.util.List;
+import java.util.ArrayList;
+
+import shared.KVPair;
+import shared.Constants;
+import shared.KVMeta;
 import shared.messages.IKVMessage;
 import shared.messages.IKVMessage.StatusType;
 
-import constants.Constants;
-
 public class KVMessageTool {    
 
-    public static void sendMessage(KVMessage msg, OutputStream output) throws IOException {
+    public static void sendMessage(IKVMessage msg, OutputStream output) throws IOException {
         byte[] msgBytes = msg.getByteMessage();
         output.write(msgBytes, 0, msgBytes.length);
         output.flush();
     }
 
-    public static KVMessage receiveMessage(InputStream input) throws IOException {
+    public static IKVMessage receiveMessage(InputStream input) throws IOException {
         int idx = 0;
 
         byte[] msg = null, tmp = null;
@@ -28,7 +32,8 @@ public class KVMessageTool {
         /* read first char from stream */
         byte read = (byte) input.read();	
         boolean isReading = true;
-        if( read == Constants.ERROR){
+        if( read == Constants.ERROR || read == Constants.SLASH_N || 
+            read == Constants.SLASH_R){
             return null;
         }
 
@@ -84,14 +89,17 @@ public class KVMessageTool {
         return parseMessage(new String(msg, StandardCharsets.UTF_8));
     }
 
-    public static KVMessage parseMessage(String msg){
+    public static IKVMessage parseMessage(String msg){
         try{
+            IKVMessage message;
+            if(msg.length() <1){
+                message = new KVMessage(parseStringType("FAILED"));
+            }
             msg = msg.substring(0, msg.length()-1); // remove '\r' at the end
             String[] tokens = msg.split("\\s+", 2);
                     
             StatusType type = parseStringType(tokens[0]);
-            KVMessage message;
-
+            
             switch (type) {
                 case GET:
                     message = new KVMessage(type, tokens[1]);
@@ -103,7 +111,34 @@ public class KVMessageTool {
                     message = new KVMessage(type, tokens[1]);
                     break;
                 case FAILED:
+                    message = new KVMessage(type);
+                    break;
+                case META:
+                    message = new KVMessage(type);
+                    break;
+                case META_UPDATE:
+                    message = new KVMeta(tokens[1]);
+                    break;
+                case SERVER_NOT_RESPONSIBLE:
+                    message = new KVMessage(type);
+                    break;
+                case SERVER_WRITE_LOCK:
+                    message = new KVMessage(type);
+                    break;
+                case SERVER_STOPPED:
+                    message = new KVMessage(type);
+                    break;
+                case SERVER_ACTIVE:
+                    message = new KVMessage(type);
+                    break;
+                case SERVER_REMOVE:
+                    message = new KVMessage(type);
+                    break;
+                case DATA_TRANSFER:
                     message = new KVMessage(type, tokens[1]);
+                    break;
+                case DATA_TRANSFER_SUCCESS:   
+                    message = new KVMessage(type);
                     break;
                 default:
                     String[] pair = tokens[1].split("\\s+", 2);
@@ -119,7 +154,7 @@ public class KVMessageTool {
             return null;
         }
     }
-    
+
     public static StatusType parseStringType(String type){
         switch (type.toUpperCase()) {
             case "GET":
@@ -142,48 +177,45 @@ public class KVMessageTool {
                 return StatusType.DELETE_ERROR;
             case "INFO":
                 return StatusType.INFO;
+            case "META":
+                return StatusType.META;
+            case "META_UPDATE":
+                return StatusType.META_UPDATE;
+            case "SERVER_NOT_RESPONSIBLE":
+                return StatusType.SERVER_NOT_RESPONSIBLE;
+            case "SERVER_WRITE_LOCK":
+                return StatusType.SERVER_WRITE_LOCK;
+            case "SERVER_STOPPED":
+                return StatusType.SERVER_STOPPED;
+            case "SERVER_ACTIVE":
+                return StatusType.SERVER_ACTIVE;
+            case "DATA_TRANSFER":
+                return StatusType.DATA_TRANSFER;
+            case "DATA_TRANSFER_SUCCESS":
+                return StatusType.DATA_TRANSFER_SUCCESS;
+            case "SERVER_REMOVE":
+                return StatusType.SERVER_REMOVE;
+            case "KEYRANGE_SUCCESS":
+                return StatusType.META_UPDATE;
             default:
                 return StatusType.FAILED;
         }
     }
 
-    public static String parseStatusType(StatusType type){
-        String statusString = "";
-        switch (type) {
-            case GET:
-                statusString = "GET";
-                break;
-            case GET_ERROR:
-                statusString = "GET_ERROR";
-                break;
-            case GET_SUCCESS:
-                statusString = "GET_SUCCESS";
-                break;
-            case PUT:
-                statusString = "PUT";
-                break;
-            case PUT_SUCCESS:
-                statusString = "PUT_SUCCESS";
-                break;
-            case PUT_UPDATE:
-                statusString = "PUT_UPDATE";
-                break;
-            case PUT_ERROR:
-                statusString = "PUT_ERROR";
-                break;
-            case DELETE_SUCCESS:
-                statusString = "DELETE_SUCCESS";
-                break;
-            case DELETE_ERROR:
-                statusString = "DELETE_ERROR";
-                break;
-            case INFO:
-                statusString = "INFO";
-                break;
-            default:
-                statusString = "FAILED";
-                break;
+    public static List<KVPair> convertToKVPairList(IKVMessage message){
+        String msg = message.getMessage().trim();
+        String[] tokens = msg.split("\\s+", 2);
+        List<KVPair> transferData = new ArrayList<>();
+        String key;
+        String value;
+        if (tokens.length < 2) return transferData;
+        for(String pair: tokens[1].split("<DELIMITER>")){
+            String[] keyValue = pair.split(" ", 2);
+            if (pair.isEmpty()) continue;
+            key = keyValue[0];
+            value = keyValue[1];
+            transferData.add(new KVPair(key, value, null, 0, 0));
         }
-        return statusString;
+        return transferData;
     }
 }

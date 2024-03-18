@@ -13,13 +13,12 @@ import logger.LogSetup;
 import cmnct_client.KVCommInterface;
 import cmnct_client.KVStore;
 
+import shared.Constants;
+import shared.KVUtils;
 import shared.messages.KVMessage;
 import shared.messages.IKVMessage;
 import shared.messages.KVMessageTool;
-
 import shared.messages.IKVMessage.StatusType;
-
-import constants.Constants;
 
 public class KVClient implements IKVClient {
 
@@ -39,9 +38,9 @@ public class KVClient implements IKVClient {
 			new LogSetup("logs/client.log", Level.ALL);
 			KVClient client = new KVClient();
 			client.run();
-		} catch (IOException e) {
-			System.out.println("Error! Unable to initialize logger!");
-			e.printStackTrace();
+		} catch (IOException ioe) {
+            KVUtils.printError("Unable to initialize logger!", ioe, logger);
+			ioe.printStackTrace();
 			System.exit(1);
 		}
     }
@@ -57,7 +56,7 @@ public class KVClient implements IKVClient {
 				this.handleCommand(cmdLine);
 			} catch (IOException e) {
 				stop = true;
-				printError("CLI does not respond - Application terminated", e);
+				KVUtils.printError("CLI does not respond - Application terminated", e, logger);
 			}
 		}
     }
@@ -77,6 +76,9 @@ public class KVClient implements IKVClient {
                     case "disconnect":
                         disconnection();
                         break;
+                    case "keyrange":
+                        keyrange();
+                        break;
                     default:
                         commandError(tokens[0]);
                 }
@@ -84,7 +86,7 @@ public class KVClient implements IKVClient {
             case 2:
                 switch (tokens[0].toLowerCase()){
                     case "loglevel":
-                        logLevel(tokens[1]);
+                        logger.setLevel(KVUtils.getLogLevel(tokens[1]));
                         break;
                     case "get":
                         get(tokens[1]);
@@ -130,7 +132,10 @@ public class KVClient implements IKVClient {
         sb.append("get <key>");
 		sb.append("\t\t\t Retrieves the value for the given key from the storage server.\n");
 
-		sb.append("logLevel");
+        sb.append("keyrange");
+        sb.append("\t\t\t Retrieves the keyrange of connected server.\n");
+
+		sb.append("");
 		sb.append("\t\t\t Sets the logger to the specified log level. \n");
 		sb.append("\t\t\t\t ALL | DEBUG | INFO | WARN | ERROR | FATAL | OFF\n");
 		
@@ -146,74 +151,39 @@ public class KVClient implements IKVClient {
     private void quit(){
         stop = true;
         disconnection();
-        printSuccess("Application exit!");
+        KVUtils.printSuccess("Application exit!", logger);
     }
-
-    private void logLevel(String level){
-        boolean success = true;
-        switch (level.toUpperCase()) {
-            case "ALL":
-                logger.setLevel(Level.ALL);
-                break;
-            case "DEBUG":
-                logger.setLevel(Level.DEBUG);
-                break;
-            case "INFO":
-                logger.setLevel(Level.INFO);
-                break;
-            case "WARN":
-                logger.setLevel(Level.WARN);
-                break;
-            case "ERROR":
-                logger.setLevel(Level.ERROR);
-                break;
-            case "FATAL":
-                logger.setLevel(Level.FATAL);
-                break;
-            case "OFF":
-                logger.setLevel(Level.OFF);
-                break;
-            default:
-                printError("Unknown log level!", null);
-                printPossibleLogLevels();
-                success = false;
-        }
-        if(success) printSuccess("Current log level is: " + 
-                                logger.getLevel().toString());
-    }
-
-    private void printPossibleLogLevels() {
-		System.out.println("\t  Possible log levels are:");
-		System.out.println("\t  ALL | DEBUG | INFO | WARN | ERROR | FATAL | OFF");
-	}
 
     private void commandError(String cmd){
         switch (cmd.toLowerCase()){
             case "":
                 break;
             case "connect":
-                printError("Invalid number of parameters!", null);
+                KVUtils.printError("Invalid number of parameters!", null, logger);
                 break;
             case "disconnect":
-                printError("Too many parameters!", null);
+                KVUtils.printError("Too many parameters!", null, logger);
+                break;
+            case "keyrange":
+                KVUtils.printError("Too many parameters!", null, logger);
                 break;
             case "put":
-                printError("Invalid number of parameters!", null);
+                KVUtils.printError("Invalid number of parameters!", null, logger);
                 break;
             case "get":
-                printError("Invalid number of parameters!", null);
+                KVUtils.printError("Invalid number of parameters!", null, logger);
                 break;
-            case "logLevel":
-                printError("Invalid number of parameters!", null);
+            case "loglevel":
+                KVUtils.printError("Invalid number of parameters!", null, logger);
                 break;
             case "help":
-                printError("Too many parameters!", null);
+                KVUtils.printError("Too many parameters!", null, logger);
                 break;
             case "quit":
-                printError("Too many parameters!", null);
+                KVUtils.printError("Too many parameters!", null, logger);
                 break;
             default:
-                printError("Unknown command!", null);
+                KVUtils.printError("Unknown command!", null, logger);
                 help();
         }
     }
@@ -225,9 +195,9 @@ public class KVClient implements IKVClient {
             serverPort = Integer.parseInt(port);
             newConnection(serverAddress, serverPort);
         } catch (NumberFormatException nfe) {
-            printError("No valid port number. Port must be a number!", nfe);
+            KVUtils.printError("No valid port number. Port must be a number!", nfe, logger);
         } catch (Exception e){
-            printError("Unexpected things happen when tries to connect!", e);
+            KVUtils.printError("Unexpected things happen when tries to connect!", e, logger);
         }
     }
 
@@ -242,23 +212,23 @@ public class KVClient implements IKVClient {
             kvStore.disconnect();
             kvStore = null;
         } catch(NullPointerException e){
-            printError("No server connection!", e);
+            KVUtils.printError("No server connection!", e, logger);
         } catch(Exception e){
-            printError("Unexpected things happen when tries to disconnect the server", e);
+            KVUtils.printError("Unexpected things happen when tries to disconnect the server", e, logger);
         }
     }
 
     private void put(String key, String value){
         if(key.length() >= Constants.KEY_SIZE){
-            printError("Key is too big (larger than " + Constants.KEY_SIZE + "Bytes), can't fill in!", null);
+            KVUtils.printError("Key is too big (larger than " + Constants.KEY_SIZE + "Bytes), can't fill in!", null, logger);
             return;
         }
         if(value.length() >= Constants.VAL_SIZE * 1024){
-            printError("Value is too big (larger than " + Constants.VAL_SIZE + "KBytes), can't fill in!", null);
+            KVUtils.printError("Value is too big (larger than " + Constants.VAL_SIZE + "KBytes), can't fill in!", null, logger);
             return;
         }
         if(key.trim().isEmpty()){
-            printError("Key can not be empty", null);
+            KVUtils.printError("Key can not be empty", null, logger);
             return;
         }
 
@@ -269,41 +239,47 @@ public class KVClient implements IKVClient {
             StatusType status = msg.getStatus();
             switch (status) {
                 case PUT_SUCCESS:
-                    printSuccess("Put " + key_value + " SUCCESS!");
+                    KVUtils.printSuccess("Put " + key_value + " SUCCESS!", logger);
                     break;
                 case PUT_UPDATE:
-                    printSuccess("Put " + key_value + " UPDATE!");
+                    KVUtils.printSuccess("Put " + key_value + " UPDATE!", logger);
                     break;
                 case PUT_ERROR:
-                    printError("Put " + key_value + " FAIL!", null);
+                    KVUtils.printError("Put " + key_value + " FAIL!", null, logger);
                     break;
                 case DELETE_ERROR:
-                    printError(key_value + " DELETE FAIL!", null);
+                    KVUtils.printError(key_value + " DELETE FAIL!", null, logger);
                     break;
                 case DELETE_SUCCESS:
-                    printSuccess(key_value + " DELETE SUCCESS!");
+                    KVUtils.printSuccess(key_value + " DELETE SUCCESS!", logger);
+                    break;
+                case SERVER_STOPPED:
+                    KVUtils.printError(key_value + " SERVER STOPPED!", null, logger);
+                    break;
+                case SERVER_WRITE_LOCK:
+                    KVUtils.printError(key_value + " SERVER WRITE LOCK!", null, logger);
                     break;
                 default:
-                    printError("fail in wrong return status: " + status + " !", null);
+                    KVUtils.printError("fail in wrong return status: " + status + " !", null, logger);
             }
         } catch(NullPointerException e){ 
-            printError("No server connection!", e);
+            KVUtils.printError("No server connection!", e, logger);
         } catch(IOException e){
-            printError("Unable to put " + key_value + " !", e);
+            KVUtils.printError("Unable to put " + key_value + " !", e, logger);
             disconnection();
         } catch(Exception e){
-            printError("Unexpected things happen when tries to put " + key_value + " !", e);
+            KVUtils.printError("Unexpected things happen when tries to put " + key_value + " !", e, logger);
             disconnection();
         }
     }
 
-    private void get(String key){
+    private void get(String key){           
         if(key.length() >= Constants.KEY_SIZE){
-            printError("Key is too big (larger than " + Constants.KEY_SIZE + "Bytes), can't fill in!", null);
+            KVUtils.printError("Key is too big (larger than " + Constants.KEY_SIZE + "Bytes), can't fill in!", null, logger);
             return;
         }
         if(key.trim().isEmpty()){
-            printError("Key can not be empty", null);
+            KVUtils.printError("Key can not be empty", null, logger);
             return;
         }
 
@@ -312,44 +288,58 @@ public class KVClient implements IKVClient {
             StatusType status = msg.getStatus();
             switch (status) {
                 case GET_SUCCESS:
-                    printSuccess("Get " + key + ": " + msg.getValue());
+                    KVUtils.printSuccess("Get " + key + ": " + msg.getValue(), logger);
                     break;
                 case GET_ERROR:
-                    printError("Can't get "+ key + "!", null);
+                    KVUtils.printError("Can't get "+ key + "!", null, logger);
+                    break;
+                case SERVER_STOPPED:
+                    KVUtils.printError(" SERVER STOPPED!", null, logger);
                     break;
                 default:
-                    printError("Fail in wrong return status: " + status + " !", null);
+                    KVUtils.printError("Fail in wrong return status: " + status + " !", null, logger);
                     break;
             }
         } catch(NullPointerException e){
-            printError("No server connection!", e);
+            KVUtils.printError("No server connection!", e, logger);
         } catch(IOException e){
-            printError("Unable to get " + key + " !", e);
+            KVUtils.printError("Unable to get " + key + " !", e, logger);
             disconnection();
         } catch(Exception e){
-            printError("Unexpected things happen when tries to get " + key + " !", e);
+            KVUtils.printError("Unexpected things happen when tries to get " + key + " !", e, logger);
             disconnection();
         }
     }
 
-    /* General Helpers */
+    private void keyrange(){
+        try{
+            IKVMessage msg = kvStore.keyrange();
+            StatusType status = msg.getStatus();
+            switch (status) {
+                case META_UPDATE:
+                    KVUtils.printSuccess("get keyrange: " + msg.getMessage(), logger);
+                    break;
+                case SERVER_STOPPED:
+                    KVUtils.printError(" SERVER STOPPED!", null, logger);
+                    break;
+                default:
+                    KVUtils.printError("Fail in wrong return status: " + status + " !", null, logger);
+                    break;
+            }
+        } catch(NullPointerException e){
+            KVUtils.printError("No server connection!", e, logger);
+        } catch(IOException e){
+            KVUtils.printError("Unable to get new metaData!", e, logger);
+            disconnection();
+        } catch(Exception e){
+            KVUtils.printError("Unexpected things happen when tries to get!", e, logger);
+            disconnection();
+        }
+
+    }
+
     @Override
     public KVCommInterface getStore(){
         return kvStore;
-    }
-
-    public void printError(String msg, Exception e){
-        System.out.println(Constants.PROMPT + "[ERROR]: " + msg);
-        if(e != null) logger.error(msg, e);
-    }
-    
-    public void printSuccess(String msg){
-        System.out.println(Constants.PROMPT + "[SUCCESS]: " + msg);
-        logger.info(msg);
-	}
-
-    public void printInfo(String msg){
-        System.out.println(Constants.PROMPT + msg);
-        logger.info(msg);
     }
 }
