@@ -8,7 +8,7 @@ import java.math.BigInteger;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
-import app_kvServer.KVServer.ServerStatus;
+import shared.Constants.ServerStatus;
 import shared.messages.IKVMessage.StatusType;
 
 public class KVUtils {
@@ -53,14 +53,27 @@ public class KVUtils {
         System.out.println("[ERROR]: " + msg);
         if(e != null && logger != null) logger.error(msg, e);
     }
+
+    public static void printError(String msg){
+        System.out.println("[ERROR]: " + msg);
+    }
     
     public static void printSuccess(String msg, Logger logger){
         System.out.println("[SUCCESS]: " + msg);
         if(logger != null) logger.info(msg);
     }
+
+    public static void printSuccess(String msg){
+        System.out.println("[SUCCESS]: " + msg);
+    }
+
     public static void printInfo(String msg, Logger logger){
         System.out.println(msg);
         if(logger != null) logger.info(msg);
+    }
+
+    public static void printInfo(String msg){
+        System.out.println(msg);
     }
 
     /* Consistent Hashing */
@@ -124,5 +137,14 @@ public class KVUtils {
                 printError("Server status " + str + "is invalid!", null, null);
         }
         return status;
+    }
+
+    public static boolean keyInKeyRange(BigInteger[] keyRange, String key){
+        BigInteger keyBigInteger = KVUtils.consistHash(key);
+        int compare = keyRange[0].compareTo(keyRange[1]);
+        
+        return (compare == 0) ||
+            (compare == 1 && (keyRange[0].compareTo(keyBigInteger) <= 0 || keyRange[1].compareTo(keyBigInteger) > 0)) ||
+            (compare == -1 && (keyRange[0].compareTo(keyBigInteger) <= 0 && keyRange[1].compareTo(keyBigInteger) > 0));
     }
 }

@@ -1,5 +1,7 @@
 package shared;
 
+import java.util.Map;
+
 import org.apache.log4j.Logger;
 
 public class Constants {
@@ -14,6 +16,7 @@ public class Constants {
     public static final String PATH_DFILE = "/data";
 
     public static final String LOCAL_HOST = "localhost";
+    public static final String LOCAL_HOST_IP = "127.0.0.1";
 
     public static String DELETE = "null";
 
@@ -45,6 +48,29 @@ public class Constants {
     // KVServer
     public static final int CACHE_SIZE = 10;
     public static final String CACHE_STRATEGY = Constants.LRU;
+
+    // Priority: MYSELF > SUCCESSOR > PREDECESSOR > GRAND_SUCCESSOR > GRAND_PREDECESSOR
+    public enum ServerRelation {
+        SUCCESSOR,
+        GRAND_SUCCESSOR,
+        PREDECESSOR,
+        GRAND_PREDECESSOR,
+        MYSELF,
+        OTHERS
+    }
+
+    public enum ServerStatus {
+		ACTIVATED,
+		IN_TRANSFER,
+		STOPPED,
+		REMOVE
+	}
+
+	public enum ServerUpdate {
+		ADD,
+		REMOVE,
+		CRASH
+	}
 
     // KVServerStorage
     public static final Logger logger = Logger.getRootLogger();

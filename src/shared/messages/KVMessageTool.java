@@ -117,7 +117,7 @@ public class KVMessageTool {
                     message = new KVMessage(type);
                     break;
                 case META_UPDATE:
-                    message = new KVMeta(tokens[1]);
+                    message = new KVMeta(type, tokens[1]);
                     break;
                 case SERVER_NOT_RESPONSIBLE:
                     message = new KVMessage(type);
@@ -129,7 +129,7 @@ public class KVMessageTool {
                     message = new KVMessage(type);
                     break;
                 case SERVER_ACTIVE:
-                    message = new KVMessage(type);
+                    message = new KVMessage(type,tokens[1]);
                     break;
                 case SERVER_REMOVE:
                     message = new KVMessage(type);
@@ -139,6 +139,10 @@ public class KVMessageTool {
                     break;
                 case DATA_TRANSFER_SUCCESS:   
                     message = new KVMessage(type);
+                    break;
+                case DATA_TRANSFER_SINGLE:
+                    String[] keyvalue = tokens[1].split("\\s+", 2);
+                    message = new KVPair(keyvalue[0], keyvalue[1], false);
                     break;
                 default:
                     String[] pair = tokens[1].split("\\s+", 2);
@@ -191,6 +195,8 @@ public class KVMessageTool {
                 return StatusType.SERVER_ACTIVE;
             case "DATA_TRANSFER":
                 return StatusType.DATA_TRANSFER;
+            case "DATA_TRANSFER_SINGLE":
+                return StatusType.DATA_TRANSFER_SINGLE;
             case "DATA_TRANSFER_SUCCESS":
                 return StatusType.DATA_TRANSFER_SUCCESS;
             case "SERVER_REMOVE":

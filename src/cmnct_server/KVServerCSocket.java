@@ -22,6 +22,7 @@ import shared.messages.IKVMessage.StatusType;
 import shared.Constants;
 import shared.KVMeta;
 import shared.KVUtils;
+import shared.Constants.ServerUpdate;
 
 import java.util.List;
 
@@ -125,18 +126,41 @@ public class KVServerCSocket {
 		}	
 	}
 
-    public IKVMessage transferData(List<KVPair> transferData) throws Exception {
-		IKVMessage receiveMessage = null;
-		try{ 
-			KVMessageTool.sendMessage(new KVMessage(StatusType.DATA_TRANSFER, transferData),output);
-		}catch(Exception e){
-			logger.error("Unable to send transfer data!");
+	public void transferSingleData(KVPair message) throws IOException {
+		try{
+			KVMessageTool.sendMessage(message, output);
+		}catch(IOException e){
+			logger.error("Unable to transfer single replicate!");
 			disconnect();
 			throw e;
 		}finally{
-			System.out.println("send the transfer data successfully!");
-		}	
-		return receiveMessage;
+			KVUtils.printSuccess("Send the transfer data!");
+		}
+	}
+
+	public void transferData(List<KVPair> data){
+		try {
+			KVMessageTool.sendMessage(new KVMessage(StatusType.DATA_TRANSFER, data), output);
+			KVUtils.printSuccess("Send the transfer data!");
+		} catch(Exception e){
+			logger.error("Unable to send transfer data!");
+			disconnect();
+		}
+	}
+
+	// deprecated
+	public boolean receiveDataTransferSuccess() {
+		try {
+			IKVMessage msg = KVMessageTool.receiveMessage(input);
+			if(msg.getStatus() == StatusType.DATA_TRANSFER_SUCCESS)
+				KVUtils.printSuccess("Receive DATA_TRANSFER_SUCCESS from server: " + this.server);
+			else
+				KVUtils.printSuccess("Receive unexpected DATA_TRANSFER response from server: " + this.server);
+		} catch (IOException e) {
+			KVUtils.printError("Unable to receive DATA_TRANSFER response from server: " + this.server);
+			return false;
+		}
+		return true;
 	}
 
     public KVMeta receiveMetaData() throws Exception {
@@ -151,35 +175,27 @@ public class KVServerCSocket {
 				System.out.println("Unable to transfer KVMeta from IKVMessage!");
 			}
 		}catch(Exception e){
-			logger.error("Unable to recive metaData from ECS server!");
+			KVUtils.printError("Unable to recive metaData from ECS server!");
 			disconnect();
 			throw e;
 		}
 		return meta;
 	}
 
-    public IKVMessage sendServerCurrentState(StatusType type, int version) throws Exception {
+	public IKVMessage sendServerCurrentState(StatusType type, int version) throws Exception {
 		IKVMessage receiveMessage = null;
+
 		try{
 			KVMessageTool.sendMessage(new KVMessage(type,version), output);
 			KVUtils.printInfo("Send the status to ECS server!", logger);
 		}catch(Exception e){
-			logger.error("Unable to send status to ECS server!");
+			KVUtils.printError("Unable to send status to ECS server!");
 			disconnect();
 			throw e;
 		}
-		return receiveMessage;
 
-	}	public boolean receiveDataTransferSuccess() {
-		try {
-			KVMessageTool.receiveMessage(input);
-			System.out.println("receive DATA_TRANSFER_SUCCESS from the server!");
-		} catch (IOException e) {
-			return false;
-		}
-		return true;
+		return receiveMessage;
 	}
-	
 
     public boolean isRunning() {
 		return running;
@@ -244,7 +260,4 @@ public class KVServerCSocket {
                 break;
         }
 	}
-
-
-
 }

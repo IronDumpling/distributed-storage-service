@@ -19,7 +19,7 @@ import shared.KVMeta;
 public class ECSClient {
 
     private static int port = 0;
-    private static String address = Constants.LOCAL_HOST;
+    private static String address = Constants.LOCAL_HOST_IP;
     public static String dataPath = Constants.PATH_DFILE;
     private static String logPath = "logs/ecs.log";
     private static Logger logger = Logger.getRootLogger();

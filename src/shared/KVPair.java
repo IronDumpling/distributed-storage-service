@@ -65,12 +65,12 @@ public class KVPair implements IKVMessage{
     }
 
     public String str() {
-        return key + " " + value + "<DELIMITER>";
+        return key + " " + value;
     }
 
     @Override
     public IKVMessage.StatusType getStatus(){
-        return IKVMessage.StatusType.DATA_REPLICATE_SINGLE;
+        return IKVMessage.StatusType.DATA_TRANSFER_SINGLE;
     }
 
     @Override
@@ -80,7 +80,7 @@ public class KVPair implements IKVMessage{
 
     @Override
     public String getMessage(){
-        return str() + "\r\n";
+        return getStringStatus() + " " + str() + "\r\n";
     }
 
     @Override

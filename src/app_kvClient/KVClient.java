@@ -236,32 +236,37 @@ public class KVClient implements IKVClient {
 
         try{
             IKVMessage msg = kvStore.put(key, value);
-            StatusType status = msg.getStatus();
-            switch (status) {
-                case PUT_SUCCESS:
-                    KVUtils.printSuccess("Put " + key_value + " SUCCESS!", logger);
-                    break;
-                case PUT_UPDATE:
-                    KVUtils.printSuccess("Put " + key_value + " UPDATE!", logger);
-                    break;
-                case PUT_ERROR:
-                    KVUtils.printError("Put " + key_value + " FAIL!", null, logger);
-                    break;
-                case DELETE_ERROR:
-                    KVUtils.printError(key_value + " DELETE FAIL!", null, logger);
-                    break;
-                case DELETE_SUCCESS:
-                    KVUtils.printSuccess(key_value + " DELETE SUCCESS!", logger);
-                    break;
-                case SERVER_STOPPED:
-                    KVUtils.printError(key_value + " SERVER STOPPED!", null, logger);
-                    break;
-                case SERVER_WRITE_LOCK:
-                    KVUtils.printError(key_value + " SERVER WRITE LOCK!", null, logger);
-                    break;
-                default:
-                    KVUtils.printError("fail in wrong return status: " + status + " !", null, logger);
+            if (msg == null){
+                KVUtils.printInfo("Unable to put " + key_value + " !");
+            }else{
+                StatusType status = msg.getStatus();
+                switch (status) {
+                    case PUT_SUCCESS:
+                        KVUtils.printSuccess("Put " + key_value + " SUCCESS!", logger);
+                        break;
+                    case PUT_UPDATE:
+                        KVUtils.printSuccess("Put " + key_value + " UPDATE!", logger);
+                        break;
+                    case PUT_ERROR:
+                        KVUtils.printError("Put " + key_value + " FAIL!", null, logger);
+                        break;
+                    case DELETE_ERROR:
+                        KVUtils.printError(key_value + " DELETE FAIL!", null, logger);
+                        break;
+                    case DELETE_SUCCESS:
+                        KVUtils.printSuccess(key_value + " DELETE SUCCESS!", logger);
+                        break;
+                    case SERVER_STOPPED:
+                        KVUtils.printError(key_value + " SERVER STOPPED!", null, logger);
+                        break;
+                    case SERVER_WRITE_LOCK:
+                        KVUtils.printError(key_value + " SERVER WRITE LOCK!", null, logger);
+                        break;
+                    default:
+                        KVUtils.printError("fail in wrong return status: " + status + " !", null, logger);
+                }
             }
+            
         } catch(NullPointerException e){ 
             KVUtils.printError("No server connection!", e, logger);
         } catch(IOException e){
@@ -285,21 +290,26 @@ public class KVClient implements IKVClient {
 
         try{
             IKVMessage msg = kvStore.get(key);
-            StatusType status = msg.getStatus();
-            switch (status) {
-                case GET_SUCCESS:
-                    KVUtils.printSuccess("Get " + key + ": " + msg.getValue(), logger);
-                    break;
-                case GET_ERROR:
-                    KVUtils.printError("Can't get "+ key + "!", null, logger);
-                    break;
-                case SERVER_STOPPED:
-                    KVUtils.printError(" SERVER STOPPED!", null, logger);
-                    break;
-                default:
-                    KVUtils.printError("Fail in wrong return status: " + status + " !", null, logger);
-                    break;
+            if(msg == null){
+                KVUtils.printInfo("Unable to get " + key + " !");
+            }else{
+                StatusType status = msg.getStatus();
+                switch (status) {
+                    case GET_SUCCESS:
+                        KVUtils.printSuccess("Get " + key + ": " + msg.getValue(), logger);
+                        break;
+                    case GET_ERROR:
+                        KVUtils.printError("Can't get "+ key + "!", null, logger);
+                        break;
+                    case SERVER_STOPPED:
+                        KVUtils.printError("SERVER STOPPED!", null, logger);
+                        break;
+                    default:
+                        KVUtils.printError("Fail in wrong return status: " + status + " !", null, logger);
+                        break;
+                }
             }
+            
         } catch(NullPointerException e){
             KVUtils.printError("No server connection!", e, logger);
         } catch(IOException e){

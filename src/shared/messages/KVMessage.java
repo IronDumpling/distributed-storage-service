@@ -11,6 +11,7 @@ import shared.KVMeta;
 import shared.messages.IKVMessage;
 import shared.messages.KVMessageTool;
 import shared.KVPair;
+import shared.Constants.ServerUpdate;
 
 public class KVMessage implements IKVMessage {
 
@@ -53,7 +54,7 @@ public class KVMessage implements IKVMessage {
 
         this.message = type + " ";
         for(KVPair pair:transferData){
-            this.message = this.message + pair.str();
+            this.message = this.message + pair.str() + "<DELIMITER>";
         }
 
         this.message = this.message + "\r\n";

@@ -8,13 +8,15 @@ import java.net.Socket;
 import java.net.ServerSocket;
 import java.util.List;
 
-import shared.KVPair;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 
 import app_kvServer.KVServer;
-import app_kvServer.KVServer.ServerStatus;
+
+import shared.KVPair;
 import shared.KVMeta;
+import shared.KVUtils;
+import shared.Constants.ServerStatus;
 import shared.messages.IKVMessage;
 import shared.messages.KVMessage;
 import shared.messages.KVMessageTool;
@@ -83,62 +85,71 @@ public class KVServerSSocket implements Runnable {
                 }
 
                 IKVMessage sendMsg;
+
+                if (recMsg.getStatus() == StatusType.META) {
+                    sendMsg = server.getMeta();
+                    while (sendMsg == null) {
+                        sendMsg = server.getMeta();
+                    }
+                    KVMessageTool.sendMessage(sendMsg, output);
+                    return;
+                }
+
                 if(server.getServerStatus() == ServerStatus.STOPPED){
                     sendMsg = new KVMessage(StatusType.SERVER_STOPPED);
                     KVMessageTool.sendMessage(sendMsg, output);
+                    KVUtils.printInfo("Server is STOPPED!");
+                    continue;
+                }
+
+                if(server.getServerStatus() == ServerStatus.REMOVE) {
+                    sendMsg = new KVMessage(StatusType.SERVER_REMOVE);
+                    KVMessageTool.sendMessage(sendMsg, output);
+                    KVUtils.printInfo("Server is REMOVED!");
                     continue;
                 }
                 
                 switch (recMsg.getStatus()){
                     case GET:
-                        if (!server.inRange(recMsg.getKey())) {
-                            sendMsg = new KVMessage(StatusType.SERVER_NOT_RESPONSIBLE);
-                            KVMessageTool.sendMessage(sendMsg, output);
-                            break;
-                        }
                         sendMsg = server.get(recMsg.getKey());
                         KVMessageTool.sendMessage(sendMsg, output);
                         break;
                     case PUT:
-                        if (!server.inRange(recMsg.getKey())) {
-                            sendMsg = new KVMessage(StatusType.SERVER_NOT_RESPONSIBLE);
-                            KVMessageTool.sendMessage(sendMsg, output);
-                            break;
-                        }
-                        if (server.writeLock()) {
-                            sendMsg = new KVMessage(StatusType.SERVER_WRITE_LOCK);
-                            KVMessageTool.sendMessage(sendMsg, output);
-                            break;
-                        }
                         sendMsg = server.put(recMsg.getKey(), recMsg.getValue());
-                        server.writeUnlock();
                         KVMessageTool.sendMessage(sendMsg, output);
                         break;
                     case META:
                         sendMsg = server.getMeta();
+                        while (sendMsg == null) {
+                            sendMsg = server.getMeta();
+                        }
                         KVMessageTool.sendMessage(sendMsg, output);
                         break;
                     case META_UPDATE:
-                        System.out.println("receive metaData update!");
-                        if(recMsg instanceof KVMeta) server.updateKVMeta((KVMeta)recMsg);
-                        else System.out.println("Unable to transfer IIKVMessage to KVMeta!");
+                        sendMsg = server.updateKVMeta(recMsg);
+                        KVMessageTool.sendMessage(sendMsg, output);
                         break;
                     case DATA_TRANSFER:
-                        System.out.println("receive transferred data");
-                        System.out.println(recMsg.getMessage());
-                        server.writeLock();
-                        List<KVPair> pairs = KVMessageTool.convertToKVPairList(recMsg);
-                        for (KVPair pair : pairs) {
-                            server.put(pair.getKey(), pair.getValue());
-                        }
-                        server.writeUnlock();
-                        sendMsg = new KVMessage(StatusType.DATA_TRANSFER_SUCCESS);
+                        KVUtils.printInfo("receive transferred data");
+                        KVUtils.printInfo(recMsg.getMessage());
+                        sendMsg = server.recDataTransfer(recMsg);
                         KVMessageTool.sendMessage(sendMsg, output);
-
+                        break;
+                    case DATA_TRANSFER_SINGLE:
+                        KVUtils.printInfo("receive data replicate single");
+                        sendMsg = server.recTransferSingle(recMsg);
+                        KVMessageTool.sendMessage(sendMsg, output);
+                        break;
+                    case SERVER_ACTIVE:
+                        sendMsg = server.finishMetaUpdate();
+                        KVMessageTool.sendMessage(sendMsg, output);
+                        break;
                     case INFO:
+                        KVUtils.printInfo("Receive: " + recMsg.getMessage());
                         break;
                     default:
                         sendMsg = handleFail();
+                        System.out.println(recMsg.getMessage());
                         KVMessageTool.sendMessage(sendMsg, output);
                 }
 

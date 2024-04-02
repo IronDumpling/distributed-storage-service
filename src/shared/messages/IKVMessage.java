@@ -28,11 +28,8 @@ public interface IKVMessage {
 		SERVER_REMOVE,			/* server responds its status is deleted */
 
 		DATA_TRANSFER,			/* Server send rebalancing data to another server - <value> */
+		DATA_TRANSFER_SINGLE,   /* Server send a single kv pair as replicate <key> <value> */
 		DATA_TRANSFER_SUCCESS,	/* Server confirm completed to sender server - <none> */
-
-		DATA_REPLICATE_SINGLE,  /* Server send a single kv pair as replicate <key> <value> */
-
-		 						/* Try to shutdown the server - <none> */ 
 	}
 
 	public String getKey();

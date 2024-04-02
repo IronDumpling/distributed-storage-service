@@ -1,10 +1,7 @@
 package app_kvECS;
 
+import java.util.*;
 import java.util.ArrayList;
-import java.util.Map;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
@@ -25,6 +22,8 @@ import ecs.IECSNode;
 
 import shared.KVUtils;
 import shared.Constants;
+import shared.Constants.ServerStatus;
+import shared.Constants.ServerUpdate;
 import shared.KVMeta;
 
 public class ECSCmnct implements Runnable, IECSClient {
@@ -36,11 +35,13 @@ public class ECSCmnct implements Runnable, IECSClient {
     private boolean isRunning;
     private KVMeta meta;
     private int port;
+    public String updateMsg;
 
     public ECSCmnct(int port) {
         this.port = port;
         this.meta = new KVMeta();
         this.nodes = new ArrayList<>();
+        this.updateMsg = null;
     }
     
     public void run() {
@@ -80,36 +81,6 @@ public class ECSCmnct implements Runnable, IECSClient {
     }
 
     /* Hash Ring Modification */
-    @Override
-    public void joinServer(ECSNode node) {
-        lock.writeLock().lock();
-        try {
-            this.nodes.add(node);
-            node.setHashVal(KVUtils.consistHash(node.getNodeName())); 
-            Collections.sort(nodes, Comparator.comparing(ECSNode::getHashVal));
-            KVUtils.printInfo("Join server: " + node.getNodeName(), logger);
-        } catch(Exception e){
-            KVUtils.printError("Unexpected things happen when join new server!", e, logger);
-        } finally{
-            lock.writeLock().unlock();
-        }
-        printECS();
-    }
-    
-    @Override
-    public void removeServer(ECSNode node) {
-        lock.writeLock().lock();
-        try {
-            this.nodes.remove(node);
-            KVUtils.printInfo("Remove server: " + node.getNodeName(), logger);
-        } catch(Exception e){
-            KVUtils.printError("Unexpected things happen when remove server!", e, logger);
-        } finally {
-            lock.writeLock().unlock();
-        }
-        printECS();
-    }
-
     public void inputRemoveServer(String name) {
         ECSNode removeNode = getNodeByKey(name);
         if(removeNode == null){
@@ -128,8 +99,46 @@ public class ECSCmnct implements Runnable, IECSClient {
         // TODO: add
     }
 
-    public void allMetaUpdate() throws IOException {
+    @Override
+    public void joinServer(ECSNode node) throws IOException {
         lock.writeLock().lock();
+        try {
+            this.nodes.add(node);
+            node.setHashVal(KVUtils.consistHash(node.getNodeName())); 
+            Collections.sort(nodes, Comparator.comparing(ECSNode::getHashVal));
+            KVUtils.printInfo("Join server: " + node.getNodeName(), logger);
+            this.updateMsg = ServerUpdate.ADD.toString() + "," + node.getNodeName();
+        } catch(Exception e){
+            KVUtils.printError("Unexpected things happen when join new server!", e, logger);
+        } finally{
+            allMetaUpdate(null);
+            lock.writeLock().unlock();
+        }
+        printECS();
+    }
+    
+    @Override
+    public void removeServer(ECSNode node) throws IOException{
+        lock.writeLock().lock();
+        List<ECSNode> result = new ArrayList<>(this.nodes);
+        try {
+            this.nodes.remove(node);
+            
+            KVUtils.printInfo("Remove server: " + node.getNodeName(), logger);
+            printECS();
+        } catch(Exception e){
+            KVUtils.printError("Unexpected things happen when remove server!", e, logger);
+        } 
+        if(updateMsg.split(",")[0].equals(Constants.ServerUpdate.CRASH.toString())){
+            result.remove(node);
+        }
+        allMetaUpdate(result);
+        lock.writeLock().unlock();
+        printECS();
+    }
+
+    public void allMetaUpdate(List<ECSNode> traverseNodes) throws IOException {
+        if (traverseNodes == null) traverseNodes = nodes;
         try{
             meta.clearMetaWrite();
             if(nodes.size() < 1){
@@ -138,6 +147,7 @@ public class ECSCmnct implements Runnable, IECSClient {
                 BigInteger[] valPairRev = {nodes.get(nodes.size()-1).getHashVal(), 
                                             nodes.get(0).getHashVal()};
                 meta.putMetaWrite(nodes.get(0).getNodeName(), valPairRev);
+
                 for(int i = 1; i < nodes.size(); i++){
                     BigInteger[] valPair = {nodes.get(i-1).getHashVal(),
                                             nodes.get(i).getHashVal()};
@@ -146,19 +156,33 @@ public class ECSCmnct implements Runnable, IECSClient {
             }
         } catch (Exception e){
             KVUtils.printError("Unexpected things happen when generate META", e, logger);
-        } finally {
-            lock.writeLock().unlock();
         }
-                
-        lock.writeLock().lock();
+
         try{
             meta.printKVMeta();
-            for(ECSNode nd : nodes){
+        
+            if(this.updateMsg != null)
+                meta.setUpdateMsg(this.updateMsg);
+              
+            for(ECSNode nd : traverseNodes){
+                System.out.println(nd.getNodeName());
                 nd.getKVStore().metaUpdate(meta);
-                KVUtils.printInfo("Send META data to " + nd.getNodeName() + " !", logger);
             }
-        } finally {
-            lock.writeLock().unlock();
+
+            for (ECSNode nd : traverseNodes) {
+                nd.getKVStore().receiveResponse("META_UPDATE");
+            }
+            
+            for(ECSNode nd : traverseNodes){
+                nd.getKVStore().setStatus(ServerStatus.ACTIVATED, "All meta update finish!");
+                KVUtils.printInfo("Set " + nd.getNodeName() + " to activated!", logger);
+            }
+
+            for (ECSNode nd : traverseNodes) {
+                nd.getKVStore().receiveResponse("SERVER_ACTIVE");
+            }
+        } catch (Exception e){
+            KVUtils.printError("Unexpected things happen when META UPDATE", e, logger);
         }
     }
     

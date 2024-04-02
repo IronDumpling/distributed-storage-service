@@ -11,13 +11,14 @@ import org.apache.log4j.Logger;
 
 import ecs.ECSNode;
 import app_kvECS.ECSCmnct;
-import app_kvServer.KVServer.ServerStatus;
 
 import cmnct_client.KVStore;
 
 import shared.KVUtils;
 import shared.Constants;
 import shared.KVMeta;
+import shared.Constants.ServerStatus;
+import shared.Constants.ServerUpdate;
 import shared.messages.KVMessage;
 import shared.messages.IKVMessage;
 import shared.messages.IKVMessage.StatusType;
@@ -94,7 +95,6 @@ public class ECSNode implements IECSNode, Runnable {
             this.kvStore = new KVStore(this.server, this.port);
             this.kvStore.connect();
             ecsCmnct.joinServer(this);
-            ecsCmnct.allMetaUpdate();
         } catch(Exception e) {
             KVUtils.printError("Unexpected things happen when joining new server", e, logger);
         }
@@ -125,11 +125,8 @@ public class ECSNode implements IECSNode, Runnable {
                 }
                 KVMessageTool.sendMessage(sendMsg, output);
             } catch (IOException ioe) {
-                if(!kvStore.IsConnected()) {
-                    KVUtils.printInfo("Connection to " + getNodeName() + " has lost!", logger);
-                } else {
-                    KVUtils.printInfo("Unexpected things happen to the connection of " + getNodeName() + "!", logger);
-                }
+                KVUtils.printInfo("Unexpected things happen to the connection of " + 
+                                getNodeName() + "!", logger);
                 isRunning = false;
                 remove(true);
             }
@@ -142,9 +139,13 @@ public class ECSNode implements IECSNode, Runnable {
         isRunning = false;
         KVUtils.printSuccess(getNodeName() + " update status to " + this.status.toString(), logger);
         try{
+            if(isPassive){
+                ecsCmnct.updateMsg = ServerUpdate.CRASH.toString() + "," + getNodeName();
+            }else{
+                ecsCmnct.updateMsg = ServerUpdate.REMOVE.toString() + "," + getNodeName();
+            }
             ecsCmnct.removeServer(this);
-            ecsCmnct.allMetaUpdate();
-            if(!isPassive) kvStore.metaUpdate(ecsCmnct.getMeta());
+            
             KVUtils.printSuccess("Remove server " + getNodeName() + " from the system!", logger);
         } catch (IOException ioe) {
             KVUtils.printError("Failed to remove server " + getNodeName() + "!", ioe, logger);

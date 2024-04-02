@@ -3,7 +3,9 @@ ant > /dev/null 2>&1
 rm -rf data > /dev/null 2>&1
 mkdir data > /dev/null 2>&1
 
-java -jar m2-ecs.jar -p 40000 > /dev/null 2>&1 &
+rm -rf logs > /dev/null 2>&1
+
+java -jar m3-ecs.jar -p 40000 > /dev/null 2>&1 &
 sleep 2
 
 NUM_SERVERS=$1
@@ -14,13 +16,13 @@ BASE_PORT=50000
 for (( i=0; i<NUM_SERVERS; i++ )); do
   PORT=$((BASE_PORT + i))
   
-  java -jar m2-server.jar -b localhost:40000 -d ./data -p $PORT > /dev/null 2>&1 &
+  java -jar m3-server.jar -b localhost:40000 -d ./data -p $PORT > /dev/null 2>&1 &
 done
 sleep 2
 
 expect <<'END_EXPECT'
   log_user 0
-  spawn java -jar m2-client.jar loglevel off
+  spawn java -jar m3-client.jar loglevel off
   expect "KVClient>"
   
   send "connect localhost 50000\r"

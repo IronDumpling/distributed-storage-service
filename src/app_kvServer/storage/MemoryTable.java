@@ -4,6 +4,7 @@ import shared.KVPair;
 import shared.Constants;
 
 import java.io.*;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
@@ -49,6 +50,10 @@ public class MemoryTable {
 
     public boolean contains(String key) {
         return rbt.containsKey(key);
+    }
+
+    public List<Map.Entry<String, String>> getAllEntries() {
+        return new ArrayList<>(rbt.entrySet());
     }
 
     /***

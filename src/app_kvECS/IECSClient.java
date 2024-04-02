@@ -1,5 +1,6 @@
 package app_kvECS;
 
+import java.util.List;
 import java.util.Map;
 
 import ecs.ECSNode;
@@ -7,7 +8,7 @@ import ecs.IECSNode;
 
 import java.util.ArrayList;
 import java.util.Collection;
-
+import java.io.IOException;
 import java.net.Socket;
 
 public interface IECSClient {
@@ -29,14 +30,14 @@ public interface IECSClient {
      * Create a new KVServer with the specified cache size and replacement strategy and add it to the storage service at an arbitrary position.
      * @return  name of new server
      */
-    public void joinServer(ECSNode node);
+    public void joinServer(ECSNode node) throws IOException;
 
     /**
      * Removes nodes with names matching the nodeNames array
      * @param nodeNames names of nodes to remove
      * @return  true on success, false otherwise
      */
-    public void removeServer(ECSNode node);
+    public void removeServer(ECSNode node) throws IOException;
 
     /**
      * Get a map of all nodes
