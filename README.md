@@ -5,16 +5,27 @@ We have established a distributed data storage structure with ECS as the control
 ECS serves as the central control of the entire system and is responsible for managing all servers and the shared data metadata of servers. ECS is divided into the following components: the user input interface ECSClient, the server manager ECSCmnct, and the server communicator ECSNode.
 ```
 java -jar m4-ecs.jar -p <port>
+
+java -jar m4-ecs.jar -p 40000
+```
+```
+ecsclient> remove_server <ServerIP:ServerPort>
+
+ecsclient> remove_server 127.0.0.1:40001
 ```
 
 # KVServer
 ```
-java -jar m4-server.jar -d ./data -b <ECSaddress:ECSPort> -p <port>
+java -jar m4-server.jar -d <data_storage_path> -b <ECSIP:ECSPort> -p <port>
+
+java -jar m4-server.jar -d ./data -b 127.0.0.1:40000 -p 40001
 ```
 
 # KVClient
 ```
 java -jar m4-client.jar -p <port>
+
+java -jar m4-client.jar -p 30000
 ```
 ## Put/Get
 
