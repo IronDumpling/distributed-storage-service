@@ -21,6 +21,11 @@ ecsclient> remove_server 127.0.0.1:40001
 ```
 
 # KVServer
+Our Replication Mechanism divides the Storage of servers into three areas: Coordinator, Replica1, and Replica2. Each area stores data corresponding to different hash value ranges on the Hash Ring. These three areas correspond to the two functions of the server, namely Coordinator and Replica.
+
+The data stored in the Coordinator is the hash value range managed by this server on the hash ring. The Coordinator is responsible for receiving all write requests from clients and forwarding the updated data to the corresponding replica.
+
+Replica1 stores the data managed by the previous server on the hash ring, while Replica2 stores the data managed by the server before the previous server on the hash ring. Both serve as backup data and are only used to receive read requests from clients.
 
 ## Launch
 ```
@@ -51,7 +56,7 @@ kvclient> get <key>
 ```
 
 ## Subscribe/Unsubscribe
-- A single record from the table
+- Introduce a new API to subscribe a record from the table:
 
 ```
 kvclient> subscribe <key>
@@ -61,9 +66,7 @@ kvclient> subscribe apple // subscribe key
 kvclient> subscribe banana // subscribe key
 ```
 
-- A list of key
-
-Introduce a new API to list all subscribes:
+- Introduce a new API to list all subscribes:
 
 ```
 kvclient> subscribe
@@ -73,17 +76,13 @@ Current Subscribers:
 2 - banana
 ```
 
-Introduce a new API to unsubscribe:
+- Introduce a new API to unsubscribe:
 
 ```
 kvclient> unsubscribe <key>
 
 kvclient> unsubscribe apple // subscribe key
 ```
-
-The client opens a new thread to receive messages constantly. 
-
-When the coordinator receives a PUT request, broadcast the updated values to all subscribed clients
 
 ## Non-Relational Table
 ```
@@ -127,18 +126,18 @@ Experiment 1 Milestone 3 Result:
 Experiment 1 Milestone 2 Result:
 <img width="1014" alt="截屏2024-04-15 12 04 52" src="https://github.com/IronDumpling/distributed-storage-service/assets/70104294/6b6c6712-d481-4dc8-90f1-ed3923a9ef94">
 
-Experiment 1 discussion:
-We have optimized our locking strategies for milestone 3. Note that in milestone 2 we tested 1000 puts and gets, while in milestone 3, 1000 puts and gets run too fast (showing 0 seconds on gets), therefore, we expanded the testing set to 10000 puts and gets. The performance of puts becomes 10 times faster, while the performance of gets becomes 100 times faster.
+Experiment 1 discussion: We have optimized our locking strategies for milestone 3. Note that in milestone 2 we tested 1000 puts and gets, while in milestone 3, 1000 puts and gets run too fast (showing 0 seconds on gets), therefore, we expanded the testing set to 10000 puts and gets. The performance of puts becomes 10 times faster, while the performance of gets becomes 100 times faster.
 
 ## Experiment 2 Results
+Note that: The time on the y-axis is the time taken (latency) for 1000 operations
+
 Experiment 2 Milestone 3 Result:
 <img width="722" alt="截屏2024-04-15 11 58 33" src="https://github.com/IronDumpling/distributed-storage-service/assets/70104294/483547da-716d-4948-aec5-935b5b809f7f">
 
 Experiment 2 Milestone 2 Result:
 <img width="723" alt="截屏2024-04-15 11 59 06" src="https://github.com/IronDumpling/distributed-storage-service/assets/70104294/93a408c2-6fec-4164-adb8-50e7300a922f">
 
-Experiment 2 discussion:
-We used the same dataset (1000 puts and gets) as milestone 2 in experiment 2. Both the puts and gets benefit from our lock optimization. 
+Experiment 2 discussion: We used the same dataset (1000 puts and gets) as milestone 2 in experiment 2. Both the puts and gets benefit from our lock optimization. 
 Both speeds now show a linear increase as the number of clients increases, since while the client number increases, they are in the race condition of write locks.
 
 
