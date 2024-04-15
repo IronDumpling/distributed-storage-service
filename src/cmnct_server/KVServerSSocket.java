@@ -7,6 +7,7 @@ import java.io.OutputStream;
 import java.net.Socket;
 import java.net.ServerSocket;
 import java.util.List;
+import java.util.ArrayList;
 
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
@@ -136,9 +137,13 @@ public class KVServerSSocket implements Runnable {
                         KVMessageTool.sendMessage(sendMsg, output);
                         break;
                     case DATA_TRANSFER_SINGLE:
-                        KVUtils.printInfo("receive data replicate single");
+                        KVUtils.printInfo("receive data transfer single");
                         sendMsg = server.recTransferSingle(recMsg);
                         KVMessageTool.sendMessage(sendMsg, output);
+                        break;
+                    case DATA_TRANSFER_TABLE:
+                        KVUtils.printInfo("receive transferred table");
+                        server.recTableTransfer(recMsg);
                         break;
                     case SERVER_ACTIVE:
                         sendMsg = server.finishMetaUpdate();
@@ -147,12 +152,45 @@ public class KVServerSSocket implements Runnable {
                     case INFO:
                         KVUtils.printInfo("Receive: " + recMsg.getMessage());
                         break;
+                    case CREATE_TABLE:
+                        sendMsg = server.createTable(recMsg.getKey(), recMsg.getValue());
+                        KVMessageTool.sendMessage(sendMsg, output);
+                        break;
+                    case PUT_TABLE:
+                        sendMsg = server.putTable(recMsg.getKey(), recMsg.getValue());
+                        KVMessageTool.sendMessage(sendMsg, output);
+                        break;
+                    case DESTROY_TABLE:
+                        sendMsg = server.destroyTable(recMsg.getKey());
+                        KVMessageTool.sendMessage(sendMsg, output);
+                        break;
+                    case SUBSCRIBE:
+                        sendMsg = server.subscribe(recMsg.getKey(), recMsg.getValue());
+                        KVMessageTool.sendMessage(sendMsg, output);
+                        break;
+                    case UNSUBSCRIBE:
+                        sendMsg = server.unsubscribe(recMsg.getKey(), recMsg.getValue());
+                        KVMessageTool.sendMessage(sendMsg, output);
+                        break;
+                    case SUBSCRIBE_UPDATE:
+                        sendMsg = server.updateKVSubscribe(recMsg);
+                        KVMessageTool.sendMessage(sendMsg, output);
+                        break;
+                    case SELECT:
+                        String[] fields = recMsg.getValue().split(" ");
+                        List<String> listOfFields = new ArrayList<>();
+                        for(String field: fields){
+                            listOfFields.add(field);
+                        }
+                        System.out.println(listOfFields);
+                        sendMsg = server.select(recMsg.getKey(), listOfFields);
+                        KVMessageTool.sendMessage(sendMsg, output);
+                        break;
                     default:
                         sendMsg = handleFail();
                         System.out.println(recMsg.getMessage());
                         KVMessageTool.sendMessage(sendMsg, output);
                 }
-
             } catch (IOException ioe) {
                 logger.error("Error! Connection lost!", ioe);
                 isRunning = false;

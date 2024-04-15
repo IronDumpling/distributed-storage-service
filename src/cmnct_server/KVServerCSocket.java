@@ -10,11 +10,13 @@ import java.io.OutputStream;
 import java.net.Socket;
 import java.net.UnknownHostException;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 import org.apache.log4j.Logger;
 
 import shared.KVPair;
+import shared.KVSubscribe;
 import shared.messages.KVMessage;
 import shared.messages.IKVMessage;
 import shared.messages.IKVMessage.StatusType;
@@ -42,7 +44,7 @@ public class KVServerCSocket {
 	private SocketStatus status = SocketStatus.DISCONNECTED;
 	private String server = "";
 	private KVMeta metaData;
-	private int serverPort = 0 ;
+	private int localPort = 0 ;
 
     /**
 	 * Initialize KVServerCSocket with address and port of KVServer
@@ -52,12 +54,12 @@ public class KVServerCSocket {
 	private String address;
 	private int port;
 
-    public KVServerCSocket(String address, int port, int serverPort) {
+    public KVServerCSocket(String address, int port, int localPort) {
 		this.address = address;
 		this.port =  port;
 		this.server = this.address + "/" + this.port;	
 		this.metaData = null;	
-		this.serverPort = serverPort;
+		this.localPort = localPort;
 	}
 
     public void connect() throws Exception {
@@ -84,14 +86,14 @@ public class KVServerCSocket {
 			KVMessageTool.receiveMessage(input);
 			KVUtils.printSuccess("Connection established", logger);
 			try{
-				KVMessageTool.sendMessage(new KVMessage(StatusType.INFO, serverPort), output);
+				KVMessageTool.sendMessage(new KVMessage(StatusType.INFO, localPort), output);
 			}catch(Exception e){
 				logger.error("Unable to send port!");
 				disconnect();
 				throw e;
 			}
 		} catch (UnknownHostException e) {
-			logger.error("Unknown Host!", e);
+			logger.error("Unknown Host: " + address + ":" + port, e);
 		    setSocketStatus(SocketStatus.DISCONNECTED);
 			throw e;
         } catch (IOException e) {
@@ -130,7 +132,7 @@ public class KVServerCSocket {
 		try{
 			KVMessageTool.sendMessage(message, output);
 		}catch(IOException e){
-			logger.error("Unable to transfer single replicate!");
+			KVUtils.printError("Unable to transfer single replicate!", e, logger);
 			disconnect();
 			throw e;
 		}finally{
@@ -143,12 +145,44 @@ public class KVServerCSocket {
 			KVMessageTool.sendMessage(new KVMessage(StatusType.DATA_TRANSFER, data), output);
 			KVUtils.printSuccess("Send the transfer data!");
 		} catch(Exception e){
-			logger.error("Unable to send transfer data!");
+			KVUtils.printError("Unable to send transfer data!", e, logger);
 			disconnect();
 		}
 	}
 
-	// deprecated
+	public void transferTable(List<Map.Entry<String, String>> data) {
+		StringBuilder sb = new StringBuilder();
+		for (Map.Entry<String, String> entry: data) {
+			sb.append(entry.getKey()).append(" ").append(entry.getValue()).append("<DELIMITER>");
+		}
+
+		try {
+			KVMessageTool.sendMessage(new KVMessage(StatusType.DATA_TRANSFER_TABLE, sb.toString()), output);
+		} catch (Exception e) {
+			KVUtils.printError("Unable to send transfer table!", e, logger);
+		}
+	}
+
+	public void sendSubscribeData(String key, String val){
+		try {
+			KVMessageTool.sendMessage(new KVMessage(StatusType.SUBSCRIBE_EVENT, key, val), output);
+			KVUtils.printSuccess("Send subscribe data: " + key + " " + val + "!");
+		} catch(Exception e){
+			KVUtils.printError("Unable to send subscribe data: " + key + " " + val + "!", e, logger);
+			disconnect();
+		}
+	}
+
+	public void sendSubscribeData(KVSubscribe subscribe){
+		try {
+			KVMessageTool.sendMessage(subscribe, output);
+			KVUtils.printSuccess("Send subscribe update!");
+		} catch(Exception e){
+			KVUtils.printError("Unable to send subscribe update!", e, logger);
+			disconnect();
+		}
+	}
+
 	public boolean receiveDataTransferSuccess() {
 		try {
 			IKVMessage msg = KVMessageTool.receiveMessage(input);
@@ -157,7 +191,7 @@ public class KVServerCSocket {
 			else
 				KVUtils.printSuccess("Receive unexpected DATA_TRANSFER response from server: " + this.server);
 		} catch (IOException e) {
-			KVUtils.printError("Unable to receive DATA_TRANSFER response from server: " + this.server);
+			KVUtils.printError("Unable to receive DATA_TRANSFER response from server: " + this.server, e, logger);
 			return false;
 		}
 		return true;
@@ -244,6 +278,10 @@ public class KVServerCSocket {
 			clientSocket = null;
 			logger.info("connection closed!");
 		}
+	}
+
+	public String getIPAddress(){
+		return this.address + ":" + this.port;
 	}
 
     private void setSocketStatus(SocketStatus st){

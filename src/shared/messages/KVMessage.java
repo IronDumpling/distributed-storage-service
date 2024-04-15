@@ -53,7 +53,7 @@ public class KVMessage implements IKVMessage {
         this.type = type;
 
         this.message = type + " ";
-        for(KVPair pair:transferData){
+        for(KVPair pair : transferData){
             this.message = this.message + pair.str() + "<DELIMITER>";
         }
 

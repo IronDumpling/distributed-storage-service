@@ -25,6 +25,7 @@ import shared.Constants;
 import shared.Constants.ServerStatus;
 import shared.Constants.ServerUpdate;
 import shared.KVMeta;
+import shared.KVSubscribe;
 
 public class ECSCmnct implements Runnable, IECSClient {
     private static Logger logger = Logger.getRootLogger();
@@ -34,12 +35,14 @@ public class ECSCmnct implements Runnable, IECSClient {
     private ServerSocket serverSocket;
     private boolean isRunning;
     private KVMeta meta;
+    private KVSubscribe subscription;
     private int port;
     public String updateMsg;
 
     public ECSCmnct(int port) {
         this.port = port;
         this.meta = new KVMeta();
+        this.subscription = new KVSubscribe();
         this.nodes = new ArrayList<>();
         this.updateMsg = null;
     }
@@ -112,6 +115,7 @@ public class ECSCmnct implements Runnable, IECSClient {
             KVUtils.printError("Unexpected things happen when join new server!", e, logger);
         } finally{
             allMetaUpdate(null);
+            subscriptionUpdate(node, null);
             lock.writeLock().unlock();
         }
         printECS();
@@ -183,6 +187,31 @@ public class ECSCmnct implements Runnable, IECSClient {
             }
         } catch (Exception e){
             KVUtils.printError("Unexpected things happen when META UPDATE", e, logger);
+        }
+    }
+    
+    public void allSubscriptionUpdate(KVSubscribe currSubscription) {
+        if(currSubscription == null) currSubscription = this.subscription;
+        else this.subscription = currSubscription;
+
+        currSubscription.printKVSubsribe();
+
+        for(ECSNode nd : this.nodes){
+            subscriptionUpdate(nd, currSubscription);
+        }
+    }
+
+    public void subscriptionUpdate(ECSNode node, KVSubscribe currSubscription) {
+        if(currSubscription == null) currSubscription = this.subscription;
+        
+        currSubscription.printKVSubsribe();
+
+        try{
+            KVUtils.printInfo("Send subscribe update to " + node.getNodeName());
+            node.getKVStore().subscriptionUpdate(currSubscription);
+            node.getKVStore().receiveResponse("SUBSCRIBE_UPDATE");
+        } catch(Exception e){
+            KVUtils.printError("Unexpected things happen when SUBSCRIBE UPDATE", e, logger);
         }
     }
     

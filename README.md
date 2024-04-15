@@ -4,14 +4,18 @@ We have established a distributed data storage structure with ECS as the control
 # ECS
 ECS serves as the central control of the entire system and is responsible for managing all servers and the shared data metadata of servers. ECS is divided into the following components: the user input interface ECSClient, the server manager ECSCmnct, and the server communicator ECSNode.
 ## ECSClient
-ECSClient is used to receive user commands and pass them to the server manager to execute corresponding tasks. Users can indicate specific servers to remove or add by entering the server's IP and port. This allows servers that are already running to leave or enter the distributed system we designed. Additionally, users can enter "print" to view the current system status and information.
+Command: java -jar m4-ecs.jar -p <port>
+
 ## ECSCmnct & ECSNode
 ECSCmnct is a thread created by ECSClient, which has a ServerSocket that continuously listens for new connection requests. Whenever a new connection is established, ECSCmnct creates a new thread to run ECSNode.
 ECSNode first responds to the server attempting to establish a connection, then receives the server's port. It then continuously listens for received messages and updates the server's status.
 ECSCmnct manages two pieces of shared data: metadata and an array of ECSNodes. A new ECSNode is created and added to the array whenever a new connection is made. Then, ECSCmnct uses a shared Consistent Hash function to calculate the hash value and generate new metadata. ECSNode then establishes a Client Socket connection with the server's ServerSocket and broadcasts the generated metadata to all servers.
 When ECSClient receives the "add server" command, ECSCmnct attempts to establish a connection with the server's ServerSocket via a temporary ClientSocket to prompt it to join the system.
 When ECSClient receives the "remote server" command, ECSCmnct locates the corresponding ECSNode for the server and removes it from the array. Then, ECSCmnct regenerates the metadata and broadcasts the generated metadata to all servers, including the removed server.
+
 # KVServer
+Command: java -jar m4-server.jar -d ./data -b <ECSaddress:ECSPort> -p <port>
+
 Based on the milestone1, we will face the situation of multiple KVServers, which needs to communicate with each other for data transfer besides communicating with Client. 
 We add “client” socket (distinguished from server socket) to communicate with other KVServers and ECS Client. 
 When the KVServer starts, the Server will establish a socket connection to the ECS and ECS will also establish the socket connection to the KVServer server socket to send the meta-data and following meta-data updates through this connection. 
@@ -24,12 +28,62 @@ IN_TRANSFER: When KVServer receive the new meta-data update, KVServer will invok
 We have redesigned our storage server. During data transfer, we will loop over existing files, and create two categories of files: Data that will stay in the server and data to be transferred.
 After transferring the data, we will remove the old files, as well as the data copy to be transferred.
 # KVClient
-KVClient will do the same thing just like milestone 1 except addition storage of meta-data and one more command “keyrange”. Since now, we have a distributed storage on the KVServers, stored data might not on the server the client connects to. Hence, we need meta-data which stores the information to help me determine which server we should connect to retrieve the desired data.  
-Client will try to add, modify or delete the value to the server database. Client will send the message containing put request to the connected server first. If it succeeds, it means that our operation is completed. If not, it means that the serve is not in ACTIVATED. The client will keep sending the message until the message is processed by the server. If it is not on this server, serve will respond with SERVER_NOT_RESPONSIBLE. Then, client will ask serve to send its meta-data to update client side meta-data. Then, according to the new meta-data, it will connect to that serve to fetch the data. 
-Same thing happens for GET. The only difference is that it will get respond when serve is under SERVER_WRITE_LOCK. 
-keyrange is to illustrate the meta-data stored on the client side. In our design, it will ask connected serve to provide the client the newest meta-data and print it out in the terminal. 
+Command: java -jar m4-client.jar -p <port>
 
-All above operations include the automation of reconnecting to the other available KVServe according to the meta-data when the connected KVServe is removed or shut down. 
+## Subscribe/Unsubscribe
+
+- A single record from the table
+
+```
+kvclient> SUBSCRIBE <key>
+
+kvclient> SUBSCRIBE apple // subscribe key
+
+kvclient> SUBSCRIBE banana // subscribe key
+```
+
+- A query of key
+
+Introduce a new API to list all subscribes:
+
+```
+kvclient> SUBSCRIBE
+
+Current Subscribes:
+1 - apple
+2 - banana
+```
+
+Introduce a new API to unsubscribe:
+
+```
+kvclient> UNSUBSCRIBE <key>
+
+kvclient> UNSUBSCRIBE apple
+```
+
+The client opens a new thread to receive messages constantly. 
+
+When the coordinator receives a PUT request, broadcast the updated values to all subscribed clients
+
+## Non-Relational Table
+```
+kvclient> CREATE_TABLE <TableName> <field1 field2 field3 …>
+
+kvclient> CREATE_TABLE CAR NAME PRICE
+
+kvclient> PUT_TABLE <TableName> <field1_value field2_value field3_value … >
+
+kvclient> PUT_TABLE CAR XIAOMI 200000
+
+kvclient> SELECT (*) FROM CAR
+
+kvclient> SELECT (NAME) FROM CAR 
+
+kvclient> SELECT (*,WHERE:PRICE>10000) FROM CAR
+
+kvclient> SELECT (NAME,PRICE,WHERE:PRICE<10000) FROM CAR
+```
 
 # Test report
 In m2 test, we are focusing on the new features added compared with milestone 1. 

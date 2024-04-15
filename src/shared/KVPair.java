@@ -10,26 +10,36 @@ public class KVPair implements IKVMessage{
     private String value;
     private Boolean dirty;
 
+    private String table;
+
     private int originLevel;
 
     private int originLine;
 
     public KVPair(String key, String value, Boolean dirty) {
         this.key = key;
+        this.value = value;
+        this.dirty = dirty;
+        this.table = "KV";
+    }
 
+    public KVPair(String table, String key, String value, Boolean dirty) {
+        this.table = table;
+        this.key = key;
         this.value = value;
         this.dirty = dirty;
     }
 
-    public KVPair(String key, String value, Boolean dirty, int originLevel, int originLine) {
-        this(key, value, dirty);
-
-        this.originLevel = originLevel;
-        this.originLine = originLine;
-    }
-
     public String getKey() {
         return key;
+    }
+
+    public String getTable() {
+        return table;
+    }
+
+    public String getRBTKey() {
+        return table + "_" + key;
     }
 
     public String getValue() {
@@ -65,7 +75,7 @@ public class KVPair implements IKVMessage{
     }
 
     public String str() {
-        return key + " " + value;
+        return table + " " +  key + " " + value;
     }
 
     @Override

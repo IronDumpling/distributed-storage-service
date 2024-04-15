@@ -10,6 +10,8 @@ import java.util.List;
 import java.util.ArrayList;
 
 import shared.KVPair;
+import shared.KVSubscribe;
+import shared.KVUtils;
 import shared.Constants;
 import shared.KVMeta;
 import shared.messages.IKVMessage;
@@ -129,7 +131,7 @@ public class KVMessageTool {
                     message = new KVMessage(type);
                     break;
                 case SERVER_ACTIVE:
-                    message = new KVMessage(type,tokens[1]);
+                    message = new KVMessage(type, tokens[1]);
                     break;
                 case SERVER_REMOVE:
                     message = new KVMessage(type);
@@ -141,8 +143,53 @@ public class KVMessageTool {
                     message = new KVMessage(type);
                     break;
                 case DATA_TRANSFER_SINGLE:
-                    String[] keyvalue = tokens[1].split("\\s+", 2);
-                    message = new KVPair(keyvalue[0], keyvalue[1], false);
+                    String[] keyvalue = tokens[1].split("\\s+", 3);
+                    message = new KVPair(keyvalue[0], keyvalue[1], keyvalue[2], false);
+                    break;
+                case DATA_TRANSFER_TABLE:
+                    message = new KVMessage(type, tokens[1]);
+                    break;
+                case SELECT_SUCCESS:
+                    message = new KVMessage(type, tokens[1]);
+                    break;
+                case SELECT_FAIL:
+                    message = new KVMessage(type);
+                    break;
+                case SUBSCRIBE_UPDATE:
+                    message = new KVSubscribe(tokens[1]);
+                    break;
+                case SUBSCRIBE_SUCCESS:
+                    message = new KVMessage(type);
+                    break;
+                case SUBSCRIBE_FAIL:
+                    message = new KVMessage(type);
+                    break;
+                case UNSUBSCRIBE_SUCCESS:
+                    message = new KVMessage(type);
+                    break;
+                case UNSUBSCRIBE_FAIL:
+                    message = new KVMessage(type);
+                    break;
+                case PUT_TABLE_SUCCESS:
+                    message = new KVMessage(type);
+                    break;
+                case PUT_TABLE_FAIL:
+                    message = new KVMessage(type);
+                    break;
+                case CREATE_TABLE_SUCCESS:
+                    message = new KVMessage(type);
+                    break;
+                case CREATE_TABLE_FAIL:
+                    message = new KVMessage(type);
+                    break;
+                case DESTROY_TABLE:
+                    message = new KVMessage(type, tokens[1]);
+                    break;
+                case DESTROY_TABLE_SUCCESS:
+                    message = new KVMessage(type);
+                    break;
+                case DESTROY_TABLE_FAIL:
+                    message = new KVMessage(type);
                     break;
                 default:
                     String[] pair = tokens[1].split("\\s+", 2);
@@ -199,16 +246,79 @@ public class KVMessageTool {
                 return StatusType.DATA_TRANSFER_SINGLE;
             case "DATA_TRANSFER_SUCCESS":
                 return StatusType.DATA_TRANSFER_SUCCESS;
+            case "DATA_TRANSFER_TABLE":
+                return StatusType.DATA_TRANSFER_TABLE;
             case "SERVER_REMOVE":
                 return StatusType.SERVER_REMOVE;
             case "KEYRANGE_SUCCESS":
                 return StatusType.META_UPDATE;
+            case "SELECT":
+                return StatusType.SELECT;
+            case "SELECT_SUCCESS":
+                return StatusType.SELECT_SUCCESS;
+            case "SELECT_FAIL":
+                return StatusType.SELECT_FAIL;
+            case "SUBSCRIBE":
+                return StatusType.SUBSCRIBE;
+            case "SUBSCRIBE_SUCCESS":
+                return StatusType.SUBSCRIBE_SUCCESS;
+            case "SUBSCRIBE_FAIL":
+                return StatusType.SUBSCRIBE_FAIL;
+            case "SUBSCRIBE_EVENT":
+                return StatusType.SUBSCRIBE_EVENT;
+            case "SUBSCRIBE_UPDATE":
+                return StatusType.SUBSCRIBE_UPDATE;
+            case "UNSUBSCRIBE":
+                return StatusType.UNSUBSCRIBE;
+            case "UNSUBSCRIBE_SUCCESS":
+                return StatusType.UNSUBSCRIBE_SUCCESS;
+            case "UNSUBSCRIBE_FAIL":
+                return StatusType.UNSUBSCRIBE_FAIL;
+            case "PUT_TABLE":
+                return StatusType.PUT_TABLE;
+            case "PUT_TABLE_SUCCESS":
+                return StatusType.PUT_TABLE_SUCCESS;
+            case "PUT_TABLE_FAIL":
+                return StatusType.PUT_TABLE_FAIL;
+            case "CREATE_TABLE":
+                return StatusType.CREATE_TABLE;
+            case "CREATE_TABLE_SUCCESS":
+                return StatusType.CREATE_TABLE_SUCCESS;
+            case "CREATE_TABLE_FAIL":
+                return StatusType.CREATE_TABLE_FAIL;
+            case "DESTROY_TABLE":
+                return StatusType.DESTROY_TABLE;
+            case "DESTROY_TABLE_SUCCESS":
+                return StatusType.DESTROY_TABLE_SUCCESS;
+            case "DESTROY_TABLE_FAIL":
+                return StatusType.DESTROY_TABLE_FAIL;
             default:
                 return StatusType.FAILED;
         }
     }
 
     public static List<KVPair> convertToKVPairList(IKVMessage message){
+        String msg = message.getMessage().trim();
+        String[] tokens = msg.split("\\s+", 2);
+        List<KVPair> transferData = new ArrayList<>();
+        String table;
+        String key;
+        String value;
+        if (tokens.length < 2) return transferData;
+        for(String pair: tokens[1].split("<DELIMITER>")){
+            String[] keyValue = pair.split(" ", 3);
+            if (pair.isEmpty()) continue;
+            table = keyValue[0];
+            key = keyValue[1];
+            value = keyValue[2];
+            transferData.add(new KVPair(table, key, value, null));
+        }
+        return transferData;
+    }
+
+    public static List<KVPair> convertToTableList(IKVMessage message) {
+        // NOTE: The KVPair here is not the normal KVPair
+        // I use KVPair because it's easy to support a key, value structure
         String msg = message.getMessage().trim();
         String[] tokens = msg.split("\\s+", 2);
         List<KVPair> transferData = new ArrayList<>();
@@ -220,7 +330,7 @@ public class KVMessageTool {
             if (pair.isEmpty()) continue;
             key = keyValue[0];
             value = keyValue[1];
-            transferData.add(new KVPair(key, value, null, 0, 0));
+            transferData.add(new KVPair(key, value, null));
         }
         return transferData;
     }

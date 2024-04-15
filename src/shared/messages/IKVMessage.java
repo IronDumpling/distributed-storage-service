@@ -30,6 +30,35 @@ public interface IKVMessage {
 		DATA_TRANSFER,			/* Server send rebalancing data to another server - <value> */
 		DATA_TRANSFER_SINGLE,   /* Server send a single kv pair as replicate <key> <value> */
 		DATA_TRANSFER_SUCCESS,	/* Server confirm completed to sender server - <none> */
+
+		DATA_TRANSFER_TABLE,
+
+		SELECT,              	
+		SELECT_SUCCESS,
+		SELECT_FAIL,	
+
+		SUBSCRIBE,				
+		SUBSCRIBE_SUCCESS,
+		SUBSCRIBE_FAIL,
+		SUBSCRIBE_EVENT,
+
+		SUBSCRIBE_UPDATE,
+
+		UNSUBSCRIBE,			/* can unsubsribe list, key, value */
+		UNSUBSCRIBE_SUCCESS,
+		UNSUBSCRIBE_FAIL,
+
+		PUT_TABLE,
+		PUT_TABLE_SUCCESS,
+		PUT_TABLE_FAIL,
+
+		CREATE_TABLE,
+		CREATE_TABLE_SUCCESS,
+		CREATE_TABLE_FAIL,
+
+		DESTROY_TABLE,
+		DESTROY_TABLE_SUCCESS,
+		DESTROY_TABLE_FAIL,
 	}
 
 	public String getKey();

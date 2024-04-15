@@ -23,6 +23,7 @@ import java.net.InetSocketAddress;
 
 import shared.Constants;
 import shared.KVMeta;
+import shared.KVSubscribe;
 import shared.KVUtils;
 import shared.Constants.ServerStatus;
 
@@ -40,7 +41,6 @@ public class KVStore implements KVCommInterface  {
 	private KVMeta metaData;
 	private IKVMessage receiveMessage;
 	private List<String[]> serverList;
-	
 	
 	private String address;
 	private int port;
@@ -104,7 +104,7 @@ public class KVStore implements KVCommInterface  {
 			return;
 		} 
 
-		KVUtils.printInfo("try to close connection ...");
+		//KVUtils.printInfo("try to close connection ...");
 		try {
 			tearDownConnection();
 			setSocketStatus(SocketStatus.DISCONNECTED);
@@ -153,7 +153,6 @@ public class KVStore implements KVCommInterface  {
 				disconnect();
 				return false;
 			}
-			System.out.println(reply.getMessage());
 			this.metaData = (KVMeta)reply;
 			if(this.metaData!=null){
 				KVUtils.printInfo("receive metaData from the server!");
@@ -468,6 +467,240 @@ public class KVStore implements KVCommInterface  {
 		return receiveMessage;
 	}
 
+	public boolean redirectConnection(String checkRrangeKey){
+		IKVMessage reply = null;
+		boolean isConnected = false;
+		String[] pickServer = null;
+		boolean isRedirect = true;
+		try{
+			KVMessageTool.sendMessage(new KVMessage(StatusType.META), output);
+			//KVUtils.printInfo("send mataData request!");
+		}catch (Exception e) {
+			KVUtils.printError("Unable to send mataData request!");
+			//no kvMeta and connection lost, no way to reconnect to other server
+			if(metaData != null){
+				for (Map.Entry<String, BigInteger[]> entry : this.metaData.getMetaWrite().entrySet()) {
+					String ip = entry.getKey().split(":")[0];
+					int port = Integer.parseInt(entry.getKey().split(":")[1]);
+					if(this.address.equals(ip) && this.port == port) continue;
+					
+					this.address = ip;
+					this.port = port;
+					this.server = this.address + "/" + this.port;
+					isConnected = tryConnection();
+	
+					if(isConnected) break;
+				}
+	
+				if(!isConnected){
+					KVUtils.printError("Unable to find active server to reconnect!");
+					return false;
+				}
+
+				try{
+					KVMessageTool.sendMessage(new KVMessage(StatusType.META), output);
+				} catch (Exception e2){
+					disconnect();
+					return false;
+				}
+				
+			}else{
+				KVUtils.printError("Meta Data is empty!");
+				disconnect();
+				return false;
+			}	
+		}
+
+		try{
+			reply = KVMessageTool.receiveMessage(input);
+			while(reply.getMessage() == null){
+				reply = KVMessageTool.receiveMessage(input);
+			}
+			
+			//KVUtils.printInfo("Meta Data is received!");
+		} catch (Exception e){
+			disconnect();
+			return false;
+		}
+		
+
+		if(reply == null || reply.getStatus() != StatusType.META_UPDATE){
+			KVUtils.printError("receive server respond with other STATUSTYPE except META_UPDATE!");
+			disconnect();
+			return false;
+		}
+
+		this.metaData = (KVMeta)reply;
+		if(this.metaData!=null){
+			//KVUtils.printInfo("receive metaData from the server!");
+			//this.metaData.printKVMeta();
+		}else{
+			KVUtils.printInfo("receive empty metaData from the server!");
+			disconnect();
+		}
+
+		pickServer = metaData.mapKeyWrite(checkRrangeKey);
+
+		if(pickServer == null){
+			disconnect();
+			KVUtils.printInfo("unable to find corrsponding server!");
+		}
+
+		// if( this.address.equals(pickServer[0])
+		// 	&&this.port == Integer.parseInt(pickServer[1])){
+		// 		isConnected = true;
+		// 	KVUtils.printError("don't need to redirected");
+		// }else{
+		disconnect();
+		this.address = pickServer[0];
+		this.port = Integer.parseInt(pickServer[1]);
+		this.server = this.address + "/" + this.port;
+		isConnected = tryConnection();
+		// }
+		return true;
+	}
+
+	/* =============== Subscribe =============== */
+	public IKVMessage subscribe(String key, String socketInfo){
+		if(redirectConnection(key) == false){
+			return null;
+		}
+
+		try {
+			KVMessageTool.sendMessage(new KVMessage(StatusType.SUBSCRIBE, key, socketInfo), output);
+			KVUtils.printInfo("send subscription to key: " + key + "!");
+		} catch (Exception e) {
+			KVUtils.printInfo("Unable to send subscription to key: "+ key+"!");
+		}finally{
+			try{
+				receiveMessage = KVMessageTool.receiveMessage(input);
+				KVUtils.printInfo(receiveMessage.getMessage());
+			}catch (Exception e) {
+				KVUtils.printError("Uanble to receive subscribe result!");
+			}
+		}			
+		return receiveMessage;
+	}
+
+	/* =============== Unsubscribe =============== */
+	public IKVMessage unsubscribe(String key, String socketInfo){
+		if(redirectConnection(key) == false){
+			return null;
+		}
+		try {
+			KVMessageTool.sendMessage(new KVMessage(StatusType.UNSUBSCRIBE, key, socketInfo), output);
+			KVUtils.printInfo("send unsubscription to key: "+ key+" request successfully!");
+		} catch (Exception e) {
+			KVUtils.printInfo("Unable to send unsubscription to key: "+ key+"!");
+		}finally{
+			try{
+				receiveMessage = KVMessageTool.receiveMessage(input);
+				KVUtils.printInfo(receiveMessage.getMessage());
+			}catch (Exception e) {
+				KVUtils.printError("Uanble to receive unsubscribe result!");
+			}
+		}
+		
+		return receiveMessage;
+	}
+	/* =============== TABLE =============== */
+	public IKVMessage create_table(String tableName, String tableFields){
+		if(redirectConnection(tableName) == false){
+			return null;
+		}
+
+		try {
+			KVMessageTool.sendMessage(new KVMessage(StatusType.CREATE_TABLE, tableName, tableFields), output);
+			KVUtils.printInfo("Send create Table:"+tableName+" with Fields: "+ tableFields +" request successfully!");
+		} catch (Exception e) {
+			KVUtils.printInfo("Unable to send create Table:"+tableName+" with Fields: "+ tableFields +" request!");
+		}finally{
+			try{
+				receiveMessage = KVMessageTool.receiveMessage(input);
+				KVUtils.printInfo(receiveMessage.getMessage());
+			}catch (Exception e) {
+				KVUtils.printError("Uanble to receive create_table result!");
+			}
+		}
+		return receiveMessage;
+	}
+
+	public IKVMessage put_table(String tableName, String fields){
+		if(redirectConnection(tableName) == false){
+			return null;
+		}
+
+		try {
+			KVMessageTool.sendMessage(new KVMessage(StatusType.PUT_TABLE, tableName, fields), output);
+			KVUtils.printInfo("Send PUT request " + fields + " in Table: "+tableName+" successfully!");
+		} catch (Exception e) {
+			KVUtils.printInfo("Uanble to send PUT request " + fields + " in Table: " + tableName + "!");
+		}finally{
+			try{
+				receiveMessage = KVMessageTool.receiveMessage(input);
+				KVUtils.printInfo(receiveMessage.getMessage());
+			}catch (Exception e) {
+				KVUtils.printError("Uanble to receive put_table result!");
+			}
+		}
+		return receiveMessage;
+	}
+
+	public IKVMessage destroy_table(String tableName){
+		if(redirectConnection(tableName) == false){
+			return null;
+		}
+
+		try {
+			KVMessageTool.sendMessage(new KVMessage(StatusType.DESTROY_TABLE, tableName), output);
+			KVUtils.printInfo("Send destory Table:" + tableName +" request successfully!");
+		} catch (Exception e) {
+			KVUtils.printInfo("Unable to Send destory Table:" + tableName +" request!");
+		}finally{
+			try{
+				receiveMessage = KVMessageTool.receiveMessage(input);
+				KVUtils.printInfo(receiveMessage.getMessage());
+			}catch (Exception e) {
+				KVUtils.printError("Uanble to receive destroy_table result!");
+			}
+		}
+		
+		return receiveMessage;
+	}
+
+	/* =============== SELECT =============== */
+	public String[] select(String tableName,String fields){
+		if(redirectConnection(tableName) == false){
+			return null;
+		}
+
+		String[] selectResult = null;
+		fields = fields.replace(",", " ");
+
+		try {
+			KVMessageTool.sendMessage(new KVMessage(StatusType.SELECT, tableName, fields), output);
+			KVUtils.printInfo("Send select Fields: " + fields + " in Table:" + tableName +" request successfully!");
+		} catch (Exception e) {
+			KVUtils.printInfo("Unable to send select Fields: " + fields + " in Table:" + tableName +" request!");
+		}
+		try{
+			receiveMessage = KVMessageTool.receiveMessage(input);
+			//KVUtils.printInfo(receiveMessage.getMessage());
+			if(receiveMessage.getStatus() == StatusType.SELECT_SUCCESS){
+				
+				selectResult = receiveMessage.getMessage().split(" ",2)[1].split("<DELIMITER>");
+	
+			}else{
+				KVUtils.printError("wrong return status!");
+				selectResult = null;
+			}
+		}catch (Exception e) {
+			KVUtils.printError("Uanble to receive select result!");
+		}
+		
+		return selectResult;
+	}
+
 	/* =============== Helpers =============== */
 	public boolean tryConnection(){
 		try {
@@ -482,7 +715,7 @@ public class KVStore implements KVCommInterface  {
 			|| receiveMessage.getStatus() == StatusType.SERVER_REMOVE ){
 				return false;
 			}
-			KVUtils.printInfo("Connection established");
+			//KVUtils.printInfo("Connection established");
 			return true;
 		} catch (IOException e) {
 			this.status = SocketStatus.DISCONNECTED;
@@ -500,11 +733,11 @@ public class KVStore implements KVCommInterface  {
 
 	private void tearDownConnection() throws IOException {
 		setRunning(false);
-		KVUtils.printInfo("tearing down the connection ...");
+		//KVUtils.printInfo("tearing down the connection ...");
 		if (clientSocket == null) return;
 		clientSocket.close();
 		clientSocket = null;
-		KVUtils.printInfo("connection closed!");
+		//KVUtils.printInfo("connection closed!");
 	}
 
 	private void setSocketStatus(SocketStatus st){
@@ -526,9 +759,8 @@ public class KVStore implements KVCommInterface  {
 		return status;
 	}
 
-	/* For ECS Cmnct */
+	/* =============== For ECS Cmnct =============== */
 	public void metaUpdate(KVMeta meta) throws IOException{
-
 		try {
 			KVMessageTool.sendMessage(meta, output);
 			KVUtils.printSuccess("Send META_UPDATE request!");
@@ -551,7 +783,6 @@ public class KVStore implements KVCommInterface  {
     }
 
 	public void setStatus(ServerStatus status, String msg) throws IOException{
-
 		try {
 			StatusType type = KVUtils.transferSeverStatusToStatusType(status);
 			KVMessageTool.sendMessage(new KVMessage(type, msg), output);
@@ -561,4 +792,13 @@ public class KVStore implements KVCommInterface  {
 		}
 	}
 
+	public void subscriptionUpdate(KVSubscribe subscribe) throws IOException {
+		try {
+			KVMessageTool.sendMessage(subscribe, output);
+			KVUtils.printSuccess("Send SUBSCRIBE_UPDATE request!");
+		} catch (Exception e) {
+			KVUtils.printError("Unable to send SUBSCRIBE_UPDATE request!");
+			throw e;
+		}
+	}
 }

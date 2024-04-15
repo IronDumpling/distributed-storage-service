@@ -3,7 +3,7 @@ package app_kvServer.storage;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Collections;
+import java.util.*;
 
 public class StorageMeta {
 
@@ -12,13 +12,23 @@ public class StorageMeta {
     public int version_number = 0;
     public int oldCount = 0;
 
+    public HashMap<String, String> tableEntryMap = new HashMap<>();
+
     public StorageMeta(String content) {
-        String[] meta = content.split(" ");
+        String[] lines = content.split("\n");
+        String[] meta = lines[0].split(" ");
 
         this.version_number = Integer.parseInt(meta[0]);
         this.nextIndex = Integer.parseInt(meta[1]);
         this.nextCopy = Integer.parseInt(meta[2]);
         this.oldCount = Integer.parseInt(meta[3]);
+
+        for (int i = 1; i < lines.length; i++) {
+            String[] entry = lines[i].split(" ", 2);
+            if (entry.length > 1) {
+                tableEntryMap.put(entry[0], entry[1]);
+            }
+        }
     }
 
     public StorageMeta(){
@@ -26,8 +36,15 @@ public class StorageMeta {
     }
 
     public void WriteToMeta(Path path) throws IOException {
-        Files.write(path, Collections.singletonList(
-                        version_number + " " + nextIndex + " " + nextCopy + " " + oldCount));
+
+        List<String> lines = new ArrayList<>();
+        lines.add(version_number + " " + nextIndex + " " + nextCopy + " " + oldCount);
+
+        for (Map.Entry<String, String> entry : tableEntryMap.entrySet()) {
+            lines.add(entry.getKey() + " " + entry.getValue());
+        }
+
+        Files.write(path, lines);
     }
 
 }

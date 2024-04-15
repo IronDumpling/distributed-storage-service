@@ -30,7 +30,8 @@ public class MemoryTable {
      * @return true if full, needs to flush into storage, otherwise false
      */
     private boolean put(KVPair pair) {
-        rbt.put(pair.getKey(), pair.getValue());
+        // TODO careful about value PUT_TABLE CAR XIAOMI 219000
+        rbt.put(pair.getRBTKey(), pair.getValue());
         occupied += pair.getKey().length() + pair.getValue().length();
         return occupied >= Constants.SST_SIZE;
     }
@@ -38,6 +39,23 @@ public class MemoryTable {
     public String get(String key) {
         // rbt will process a binary search
         return rbt.get(key);
+    }
+
+    public static ArrayList<String> fetchTable(TreeMap<String, String> rbt, String table) {
+        ArrayList<String> result = new ArrayList<>();
+
+        for (Map.Entry<String, String> entry : rbt.entrySet()) {
+
+            if (entry.getKey().startsWith(table)) {
+                result.add(entry.getKey().split("_")[1] + " " + entry.getValue());
+            }
+        }
+
+        return result;
+    }
+
+    public ArrayList<String> fetchTable(String table) {
+        return fetchTable(rbt, table);
     }
 
     public void clearMemoryTable() {
@@ -61,12 +79,9 @@ public class MemoryTable {
      * @param filename file name
      * @return how many bytes written
      */
-    public void writeToFile(String filename, List<KVPair> buffer) throws IOException{
+    public void writeToFile(String filename) throws IOException{
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(filename, true))) {
             for (Map.Entry<String, String> entry : rbt.entrySet()) {
-                if (buffer != null) {
-                    buffer.add(new KVPair(entry.getKey(), entry.getValue(), false));
-                }
                 String line = entry.getKey() + " " + entry.getValue();
                 writer.write(line);
                 writer.newLine();
@@ -92,9 +107,9 @@ public class MemoryTable {
         return treeMap;
     }
 
-    public boolean putAndWrite(String fileName, KVPair pair, List<KVPair> buffer) throws IOException {
+    public boolean putAndWrite(String fileName, KVPair pair) throws IOException {
         if (put(pair)) {
-            writeToFile(fileName, buffer);
+            writeToFile(fileName);
             return true;
         }
         return false;

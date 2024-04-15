@@ -14,6 +14,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.util.ArrayList;
 import java.util.List;
 
 public class StorageManager {
@@ -107,6 +108,16 @@ public class StorageManager {
         coordinator.copyDuplicateIntoTarget(replica1);
     }
 
+    public boolean createTable(String tableName, String fields) {
+        assert (coordinator != null);
+        if (!coordinator.createTable(tableName, fields)) return false;
+
+        if (replica1 != null) replica1.createTable(tableName, fields);
+        if (replica2 != null) replica2.createTable(tableName, fields);
+
+        return true;
+    }
+
     public BigInteger[] getKeyRange(StorageType type) {
         assert (coordinator != null);
         // currently this function is only needed for coordinator
@@ -177,20 +188,57 @@ public class StorageManager {
     }
 
     public KVPair get(String key) {
+        String rbtKey = "KV" + "_" + key;
         if (coordinator != null && coordinator.inRange(key)){
             KVUtils.printInfo("GET " + key + " from coordinator");
-            return coordinator.get(key);
+            return coordinator.get(rbtKey);
         }
         if (replica1 != null && replica1.inRange(key)){
             KVUtils.printInfo("GET " + key + " from replica1");
-            return replica1.get(key);
+            return replica1.get(rbtKey);
         }
         if (replica2 != null && replica2.inRange(key)){
             KVUtils.printInfo("GET " + key + " from replica2");
-            return replica2.get(key);
+            return replica2.get(rbtKey);
         }
         assert(false); // if key is not in range of storage, bug reported
         return null;
+    }
+
+    public List<String> select(String table, List<String> fields) {
+
+        List<String> result = new ArrayList<>();
+        if (coordinator != null) coordinator.select(table, fields, result);
+        if (replica1 != null) replica1.select(table, fields, result);
+        if (replica2 != null) replica2.select(table, fields, result);
+
+        return result;
+    }
+
+    public boolean tableSelectInRange(String table) {
+        if (coordinator != null)
+            if (coordinator.inRange(table)) return true;
+        if (replica1 != null)
+            if (replica1.inRange(table)) return true;
+        if (replica2 != null)
+            return replica2.inRange(table);
+        return false;
+    }
+
+    public boolean readTableExists(String table) {
+        if (coordinator != null)
+            if (coordinator.tableExists(table)) return true;
+        if (replica1 != null)
+            if (replica1.tableExists(table)) return true;
+        if (replica2 != null)
+            return replica2.tableExists(table);
+        return false;
+    }
+
+    public boolean writeTableExists(String table) {
+        if (coordinator != null)
+            return coordinator.tableExists(table);
+        return false;
     }
 
     public void onServerShutDown() {

@@ -17,6 +17,7 @@ import cmnct_client.KVStore;
 import shared.KVUtils;
 import shared.Constants;
 import shared.KVMeta;
+import shared.KVSubscribe;
 import shared.Constants.ServerStatus;
 import shared.Constants.ServerUpdate;
 import shared.messages.KVMessage;
@@ -120,10 +121,15 @@ public class ECSNode implements IECSNode, Runnable {
                     case SERVER_WRITE_LOCK:
                         sendMsg = updateStatus(ServerStatus.IN_TRANSFER);
                         break;
+                    case SUBSCRIBE_UPDATE:
+                        KVSubscribe subscribe = null;
+                        if(recMsg instanceof KVSubscribe) subscribe = (KVSubscribe)recMsg;
+                        ecsCmnct.allSubscriptionUpdate(subscribe);
+                        break;
                     default:
                         sendMsg = handleFail();
                 }
-                KVMessageTool.sendMessage(sendMsg, output);
+                if(sendMsg != null) KVMessageTool.sendMessage(sendMsg, output);
             } catch (IOException ioe) {
                 KVUtils.printInfo("Unexpected things happen to the connection of " + 
                                 getNodeName() + "!", logger);

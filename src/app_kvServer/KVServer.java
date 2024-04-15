@@ -31,6 +31,7 @@ import cmnct_server.KVServerSSocket;
 
 import shared.KVMeta;
 import shared.KVPair;
+import shared.KVSubscribe;
 import shared.KVUtils;
 import shared.Constants;
 import shared.Constants.ServerStatus;
@@ -63,8 +64,6 @@ public class KVServer implements IKVServer {
 	private int cacheSize = Constants.CACHE_SIZE;
 	private String cacheStrategy = Constants.CACHE_STRATEGY;
 
-	private List<KVServerCSocket> waitingSockets = new ArrayList<>();
-
 	private boolean isRunning;
 	private ServerStatus status = ServerStatus.STOPPED;
 
@@ -79,6 +78,9 @@ public class KVServer implements IKVServer {
 	private StorageManager storage;
 	private List<Socket> connectedSockets = new ArrayList<>();
 	private HashMap<Integer, Socket> serverSockets = new HashMap<>();
+
+	private KVSubscribe subscription = new KVSubscribe();
+	private List<KVServerCSocket> waitingSockets = new ArrayList<>();
 
 	/* Entry Point */
 	public static void main(String[] args) {
@@ -299,7 +301,6 @@ public class KVServer implements IKVServer {
 			KVUtils.printSuccess("Server listening on port: " + serverSocket.getLocalPort(), logger);
 			ECSSocket.connect();
 			KVUtils.printInfo(getServerID() + ": Trying to connect to ECS", logger);
-			//setServerStatus(ServerStatus.ACTIVATED, ServerUpdate.ADD);
 			setServerStatus(ServerStatus.ACTIVATED);
 			return true;
 		} catch (IOException ioe) {
@@ -360,7 +361,6 @@ public class KVServer implements IKVServer {
 		waitingSockets.addAll(sockets);
 	}
 
-	// TODO: deprecate?
 	public String findTransferServer(KVMeta kvMeta) {
 		for (Map.Entry<String, BigInteger[]> entry : kvMeta.getMetaWrite().entrySet()) {
 
@@ -379,7 +379,6 @@ public class KVServer implements IKVServer {
 		return null;
 	}
 
-	// TODO: deprecate?
 	// return type: address:port of target
 	// check if target server is myself
 	public String duplicateTransferred(KVMeta kvMeta) {
@@ -429,6 +428,46 @@ public class KVServer implements IKVServer {
 			} catch (Exception e) {
 				KVUtils.printError("Cannot transfer single replicate", e, logger);
 			}
+		}
+	}
+
+	/* 3. Send Subscribe Event Request */
+	private void subscribeEvent(StatusType type, String key, String val){
+		if (type == StatusType.PUT_ERROR || type == StatusType.DELETE_ERROR) {
+			KVUtils.printError("Can't PUT or DELETE, don't send replica!");
+			return;
+		}
+
+		if(!subscription.containsKey(key)){
+			KVUtils.printInfo("No client subscribes key: " + key);
+			return;
+		}
+
+		List<String> list = subscription.getSubscription(key);
+
+		for(String socketInfo : list){
+			String addr = socketInfo.split(":")[0];
+			int port = Integer.parseInt(socketInfo.split(":")[1]);
+
+			try {
+				KVServerCSocket socket = new KVServerCSocket(addr, port, this.port);
+				socket.connect();
+				socket.sendSubscribeData(key, val);
+				socket.disconnect();
+			} catch(IOException ioe) {
+				KVUtils.printError("Cannot send subscription messages", ioe, logger);
+			} catch (Exception e) {
+				KVUtils.printError("Cannot send subscription messages", e, logger);
+			}
+		}
+	}
+
+	/* 4. Send SUBSCRIBE_UPDATE Request to ECS */
+	private void sendSubscribeUpdate(){
+		try {
+			ECSSocket.sendSubscribeData(this.subscription);
+		} catch (Exception e) {
+			KVUtils.printError("Cannot send subscription update", e, logger);
 		}
 	}
 
@@ -482,6 +521,7 @@ public class KVServer implements IKVServer {
 		try {
 			type = putKV(key, value);
 			dataTransferSingle(type, new KVPair(key, value, false));
+			subscribeEvent(type, key, value);
 		} catch (ServerException e) {
 			type = e.status;
 		} finally{
@@ -496,18 +536,143 @@ public class KVServer implements IKVServer {
 		StatusType type = StatusType.PUT_SUCCESS;
 
 		if (cache != null) {
-			type = cache.insert(new KVPair(key, value, true, -1, -1));
+			type = cache.insert(new KVPair(key, value, true));
 			evict();
 		} else 
-			type = storage.put(new KVPair(key, value, false, -1, -1));
+			type = storage.put(new KVPair(key, value, false));
 
 		if (type.equals(StatusType.PENDING)) 
-			type = storage.put(new KVPair(key, value, false, -1, -1));
+			type = storage.put(new KVPair(key, value, false));
 
 		return type;
 	}
 
-	/* 3. Receive DATA_TRANSFER_SINGLE Request */
+	/* 3. Receive PUT_TABLE Request */
+	public KVMessage putTable(String table, String fields) {
+		if (!this.inRangeWrite(table))
+			return new KVMessage(StatusType.SERVER_NOT_RESPONSIBLE);
+		if (this.status == ServerStatus.IN_TRANSFER)
+			return new KVMessage(StatusType.SERVER_WRITE_LOCK);
+
+		String[] parts = fields.trim().split(" ", 2);
+		String key = parts[0];
+		String value = parts.length > 1 ? parts[1] : "";
+
+		if (!storage.writeTableExists(table)) return new KVMessage(StatusType.PUT_TABLE_FAIL, key, value);
+		storageLock.writeLock().lock();
+		StatusType type;
+		try {
+			type = putKV(table, key, value);
+			dataTransferSingle(type, new KVPair(table, key, value, false));
+		} catch (ServerException e) {
+			type = e.status;
+		} finally{
+			storageLock.writeLock().unlock();
+		}
+		StatusType finalType;
+		switch (type) {
+			case PUT_SUCCESS:
+			case PUT_UPDATE:
+			case DELETE_SUCCESS:
+				finalType = StatusType.PUT_TABLE_SUCCESS;
+				break;
+			default:
+				finalType = StatusType.PUT_TABLE_FAIL;
+				break;
+		}
+		return new KVMessage(finalType, key, value);
+	}
+
+	public StatusType putKV(String table, String key, String value) throws ServerException{
+		return storage.put(new KVPair(table, key, value, false));
+	}
+
+	/* 4. Receive CREATE_TABLE Request */
+	public KVMessage createTable(String table, String fields) {
+		if (!this.inRangeWrite(table))
+			return new KVMessage(StatusType.SERVER_NOT_RESPONSIBLE);
+
+		boolean status = storage.createTable(table, fields);
+		if(status) return new KVMessage(StatusType.CREATE_TABLE_SUCCESS);
+		else return new KVMessage(StatusType.CREATE_TABLE_FAIL);
+	}
+
+	/* 5. Receive DESTROY_TABLE Request */
+	public KVMessage destroyTable(String table) {
+		if (!this.inRangeWrite(table))
+			return new KVMessage(StatusType.SERVER_NOT_RESPONSIBLE);
+		return null;
+	}
+
+	/* 6. Receive SELECT Request */
+	public KVMessage select(String table, List<String> fields) {
+		if (!storage.tableSelectInRange(table))
+			return new KVMessage(StatusType.SERVER_NOT_RESPONSIBLE);
+		if (!storage.readTableExists(table))
+			return new KVMessage(StatusType.SELECT_FAIL);
+
+		List<String> results =  storage.select(table, fields);
+		String tableVal = "";
+		for(String row : results){
+			tableVal = tableVal + row + "<DELIMITER>";
+		}
+		return new KVMessage(StatusType.SELECT_SUCCESS, tableVal);
+	}
+
+	/* 7. Receive SUBSCRIBE_UPDATE Request from ECS */
+	public KVMessage updateKVSubscribe(IKVMessage recMsg){
+		KVSubscribe subscribe = null;
+		if(recMsg instanceof KVSubscribe) subscribe = (KVSubscribe)recMsg;
+		this.subscription = subscribe;
+		KVUtils.printSuccess("Update subscribe information!");
+		subscription.printKVSubsribe();
+		return new KVMessage(StatusType.INFO, "Update subscription!");
+	}
+
+	/* 8. Receive SUBSCRIBE Request */
+	public KVMessage subscribe(String key, String socketInfo) {
+
+		if (subscription.containsKey(key)) {
+			List<String> list = subscription.getSubscription(key);
+			list.add(socketInfo);
+		} else {
+			List<String> newList = new ArrayList<>();
+			newList.add(socketInfo);
+			subscription.putSubscription(key, newList);
+		}
+
+		sendSubscribeUpdate();
+		subscription.printKVSubsribe();
+
+		return new KVMessage(StatusType.SUBSCRIBE_SUCCESS);
+	}
+
+	/* 9. Receive UNSUBSCRIBE Request */
+	public KVMessage unsubscribe(String key, String socketInfo) {
+		if (!subscription.containsKey(key))
+			return new KVMessage(StatusType.UNSUBSCRIBE_FAIL);
+
+		List<String> list = subscription.getSubscription(key);
+		
+		boolean found = false;
+		for (String socket : list) {
+			if(socketInfo.compareTo(socket) == 0){
+				found = true;
+				list.remove(socket);
+				break;
+			}
+		}
+
+		if(!found)
+			return new KVMessage(StatusType.UNSUBSCRIBE_FAIL);
+
+		sendSubscribeUpdate();
+		subscription.printKVSubsribe();
+
+		return new KVMessage(StatusType.UNSUBSCRIBE_SUCCESS);
+	}
+
+	/* 10. Receive DATA_TRANSFER_SINGLE Request */
 	public KVMessage recTransferSingle(IKVMessage recMsg) {
 		if(!(recMsg instanceof KVPair)) 
 			return new KVMessage(StatusType.FAILED);
@@ -526,7 +691,7 @@ public class KVServer implements IKVServer {
 		return msg;
 	}
 
-	/* 4. Receive DATA_TRANSFER Request */
+	/* 11. Receive DATA_TRANSFER Request */
 	public KVMessage recDataTransfer(IKVMessage recMsg){
 		KVMessage msg = null;
 		
@@ -558,7 +723,15 @@ public class KVServer implements IKVServer {
 		return msg;
 	}
 
-	/* 5. Receive SERVER_ACTIVE Request */
+	public void recTableTransfer(IKVMessage recMsg) {
+		List<KVPair> pairs = KVMessageTool.convertToTableList(recMsg);
+		for(KVPair pair : pairs){
+			createTable(pair.getKey(), pair.getValue());
+		}
+
+	}
+
+	/* 11. Receive SERVER_ACTIVE Request */
 	public KVMessage finishMetaUpdate(){
 		setServerStatus(ServerStatus.STOPPED);
 		if (storage.isRemoved()) {
@@ -575,7 +748,7 @@ public class KVServer implements IKVServer {
 		return new KVMessage(StatusType.INFO, "Meta UPDATE finish!");
 	}
 
-	/* 6. Receive META_UPDATE Request */
+	/* 13. Receive META_UPDATE Request */
 	public KVMessage updateKVMeta(IKVMessage recMsg) {
 		KVMessage msg = null;
 		
@@ -647,11 +820,8 @@ public class KVServer implements IKVServer {
 	}
 
 	private void addServerMyself(KVMeta kvMeta){
-
 		BigInteger[] metaWrite = kvMeta.getMetaWrite(getServerID());
-
 		this.storage.addStorage(StorageType.COORDINATOR, metaWrite[0], metaWrite[1]);
-
 		basicLocalUpdates(kvMeta);
 	}
 
@@ -672,7 +842,6 @@ public class KVServer implements IKVServer {
 		storage.destroyStorage(StorageType.COORDINATOR);
 		storage.destroyStorage(StorageType.REPLICA1);
 		storage.destroyStorage(StorageType.REPLICA2);
-
 	}
 
 	private void addServerPredecessor(KVMeta kvMeta){
@@ -686,9 +855,7 @@ public class KVServer implements IKVServer {
 
 		// transfer data to successor
 		transfer(Collections.singletonList(predecessor), true);
-
 		basicLocalUpdates(kvMeta);
-
 		storage.copyDuplicateIntoReplica1();
 
 		// transfer data to replicators
@@ -729,37 +896,26 @@ public class KVServer implements IKVServer {
 		basicLocalUpdates(kvMeta);
 
 		if (size == 2) storage.copyDuplicateIntoReplica1();
-
 		// transfer new coordinator data to replicators
 		transfer(kvMeta.getReplicators(getServerID()), false);
-
 	}
 
 	private void removeServerSuccessor(KVMeta kvMeta) {
-
 		basicLocalUpdates(kvMeta);
-
 		transfer(kvMeta.getReplicators(getServerID()), false);
-
 	}
 
 	private void addServerGrandSuccessor(KVMeta kvMeta) {
-
 		basicLocalUpdates(kvMeta);
-
 		// transfer replica to replicator 2 : the new server
 		transfer(Collections.singletonList(kvMeta.getUpdateMsg()[1]), false);
 	}
 
 	private void removeGrandSuccessor(KVMeta kvMeta) {
-
 		basicLocalUpdates(kvMeta);
-
 		String updatedServer = kvMeta.getUpdateMsg()[1];
-
 		transfer(Collections.singletonList(kvMeta.getSuccessor(updatedServer)), false);
 	}
-
 
 	private void basicLocalUpdates(KVMeta kvMeta){
 		List<BigInteger[]> metaRead = kvMeta.getMetaRead(address, port);
